@@ -1,0 +1,13 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wood Surface -->
+  <rect width="100" height="100" fill="#d2b48c" rx="8"/>
+  
+  <!-- Wood Grain Pattern -->
+  <path d="M10 20 Q50 15 90 25" stroke="#8b4513" stroke-width="1" fill="none" opacity="0.6"/>
+  <path d="M10 40 Q50 35 90 45" stroke="#8b4513" stroke-width="1" fill="none" opacity="0.4"/>
+  <path d="M10 60 Q50 55 90 65" stroke="#8b4513" stroke-width="1" fill="none" opacity="0.6"/>
+  <path d="M10 80 Q50 75 90 85" stroke="#8b4513" stroke-width="1" fill="none" opacity="0.4"/>
+  
+  <!-- Surface Label -->
+  <text x="50" y="95" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#5d4e37">Wood</text>
+</svg>

@@ -1,0 +1,24 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Metal Surface -->
+  <rect width="100" height="100" fill="#e5e7eb" rx="8"/>
+  
+  <!-- Metal Gradient -->
+  <defs>
+    <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f3f4f6"/>
+      <stop offset="50%" stop-color="#9ca3af"/>
+      <stop offset="100%" stop-color="#6b7280"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Metal Panel -->
+  <rect x="15" y="15" width="70" height="70" fill="url(#metalGrad)" rx="4"/>
+  
+  <!-- Metal Lines -->
+  <line x1="20" y1="30" x2="80" y2="30" stroke="#4b5563" stroke-width="0.5" opacity="0.6"/>
+  <line x1="20" y1="50" x2="80" y2="50" stroke="#4b5563" stroke-width="0.5" opacity="0.6"/>
+  <line x1="20" y1="70" x2="80" y2="70" stroke="#4b5563" stroke-width="0.5" opacity="0.6"/>
+  
+  <!-- Surface Label -->
+  <text x="50" y="95" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#374151">Metal</text>
+</svg>
