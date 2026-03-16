@@ -493,42 +493,42 @@ export default function ContactMessageDetailsPage() {
             )}
 
             {/* Admin Notes */}
-            {/* <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>
-                Admin Notes
-              </h3>
-              <textarea
-                value={adminNotes}
-                onChange={(e) => setAdminNotes(e.target.value)}
-                placeholder="Add internal notes about this message..."
-                style={{
-                  width: '100%',
-                  minHeight: '100px',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  resize: 'vertical'
-                }}
-              />
-              <div style={{ marginTop: '1rem' }}>
-                <button
-                  onClick={saveAdminNotes}
-                  disabled={savingNotes}
+              {/* <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>
+                  Admin Notes
+                </h3>
+                <textarea
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  placeholder="Add internal notes about this message..."
                   style={{
-                    padding: '0.5rem 1rem',
-                    background: savingNotes ? '#9ca3af' : '#10b981',
-                    color: 'white',
-                    border: 'none',
+                    width: '100%',
+                    minHeight: '100px',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
                     borderRadius: '6px',
-                    cursor: savingNotes ? 'not-allowed' : 'pointer',
-                    fontSize: '0.875rem'
+                    fontSize: '0.875rem',
+                    resize: 'vertical'
                   }}
-                >
-                  {savingNotes ? 'Saving...' : 'Save Notes'}
-                </button>
-              </div>
-            </div> */}
+                />
+                <div style={{ marginTop: '1rem' }}>
+                  <button
+                    onClick={saveAdminNotes}
+                    disabled={savingNotes}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: savingNotes ? '#9ca3af' : '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: savingNotes ? 'not-allowed' : 'pointer',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {savingNotes ? 'Saving...' : 'Save Notes'}
+                  </button>
+                </div>
+              </div> */}
           </div>
         </div>
 

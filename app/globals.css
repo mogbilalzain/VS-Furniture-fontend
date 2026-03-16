@@ -4,14 +4,14 @@
 /* Quasimoda Font Face */
 @font-face {
   font-family: 'Quasimoda';
-  src: url('/fonts/Quasimoda/Fonts/quasimoda-light.otf') format('opentype');
+  src: url('/VsUAEE/fonts/Quasimoda/Fonts/quasimoda-light.otf') format('opentype');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Quasimoda-Bold';
-  src: url('/fonts/Quasimoda/Fonts/quasimoda-bold.otf') format('opentype');
+  src: url('/VsUAEE/fonts/Quasimoda/Fonts/quasimoda-bold.otf') format('opentype');
   font-weight: 300;
   font-style: normal;
   font-display: swap;

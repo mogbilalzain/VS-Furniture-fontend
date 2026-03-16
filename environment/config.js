@@ -4,8 +4,8 @@
  */
 
 // تحديد البيئة الحالية
-const CURRENT_ENVIRONMENT = 'production'; // يمكن تغييرها إلى 'production'
-
+const CURRENT_ENVIRONMENT = 'development'; // غيّر إلى 'development' للتطوير المحلي
+//production
 // إعدادات البيئات المختلفة
 const environments = {
   development: {

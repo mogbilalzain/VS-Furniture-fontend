@@ -182,6 +182,33 @@ export default function AdminLayout({ children }) {
             Products
           </Link>
           
+          <Link href="/admin/import-products" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0.75rem 1rem',
+            color: pathname === '/admin/import-products' ? '#FFD700' : '#cbd5e1',
+            textDecoration: 'none',
+            transition: 'all 0.3s ease',
+            borderRadius: '8px',
+            margin: '0.25rem 0.5rem',
+            backgroundColor: pathname === '/admin/import-products' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
+          }}
+          onMouseEnter={(e) => {
+            if (pathname !== '/admin/import-products') {
+              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
+              e.target.style.color = '#FFD700'
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (pathname !== '/admin/import-products') {
+              e.target.style.backgroundColor = 'transparent'
+              e.target.style.color = '#cbd5e1'
+            }
+          }}>
+            <i className="fas fa-file-import" style={{ width: '20px', marginRight: '0.75rem' }}></i>
+            Import Products
+          </Link>
+          
           <Link href="/admin/contact-messages" style={{
             display: 'flex',
             alignItems: 'center',

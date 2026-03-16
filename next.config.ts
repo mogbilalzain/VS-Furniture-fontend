@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+
   env: {
     NEXT_PUBLIC_API_URL: 'http://localhost:8000/api',
   },
@@ -20,7 +21,7 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '3000',
+        port: '8000',
       },
       // Production domains
       {
