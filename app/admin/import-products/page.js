@@ -203,9 +203,9 @@ export default function ImportProductsPage() {
 
   const handleExportResults = () => {
     if (!importResult?.details) return;
-    const rows = ['Row,Product Name,Status,Images,Error'];
+    const rows = ['Row,Product Name,Status,Images,Materials,Certifications,Properties,Files,Error'];
     for (const d of importResult.details) {
-      rows.push([d.row, `"${d.product_name || ''}"`, d.status, d.images_count || 0, d.error ? `"${d.error}"` : ''].join(','));
+      rows.push([d.row, `"${d.product_name || ''}"`, d.status, d.images_count || 0, d.materials_count || 0, d.certifications_count || 0, d.properties_count || 0, d.files_count || 0, d.error ? `"${d.error}"` : ''].join(','));
     }
     const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
@@ -423,6 +423,10 @@ export default function ImportProductsPage() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">SKU</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Category</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Images</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Materials</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Certs</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Props</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Files</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                     </tr>
                   </thead>
@@ -447,6 +451,57 @@ export default function ImportProductsPage() {
                           {row.images_count > 0 ? (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                               {row.images_count} image{row.images_count > 1 ? 's' : ''}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">None</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {row.materials_count > 0 ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700" title={row.materials?.map(m => `${m.code} (${m.name})`).join(', ')}>
+                              {row.materials_count} material{row.materials_count > 1 ? 's' : ''}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">None</span>
+                          )}
+                          {row.materials_warnings?.length > 0 && (
+                            <span className="block text-xs text-orange-500 mt-0.5" title={row.materials_warnings.join(', ')}>
+                              <i className="fas fa-exclamation-triangle mr-1"></i>{row.materials_warnings.length} warning{row.materials_warnings.length > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {row.certifications_count > 0 ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700" title={row.certifications?.map(c => c.title).join(', ')}>
+                              {row.certifications_count} cert{row.certifications_count > 1 ? 's' : ''}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">None</span>
+                          )}
+                          {row.certifications_warnings?.length > 0 && (
+                            <span className="block text-xs text-orange-500 mt-0.5" title={row.certifications_warnings.join(', ')}>
+                              <i className="fas fa-exclamation-triangle mr-1"></i>{row.certifications_warnings.length} warning{row.certifications_warnings.length > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {row.properties_count > 0 ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700" title={row.properties?.map(p => `${p.property}: ${p.display_name}`).join(', ')}>
+                              {row.properties_count} prop{row.properties_count > 1 ? 's' : ''}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">None</span>
+                          )}
+                          {row.properties_warnings?.length > 0 && (
+                            <span className="block text-xs text-orange-500 mt-0.5" title={row.properties_warnings.join(', ')}>
+                              <i className="fas fa-exclamation-triangle mr-1"></i>{row.properties_warnings.length} warning{row.properties_warnings.length > 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {row.files_count > 0 ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700" title={row.files?.map(f => `${f.name} (${f.category})`).join(', ')}>
+                              {row.files_count} file{row.files_count > 1 ? 's' : ''}
                             </span>
                           ) : (
                             <span className="text-gray-400 text-xs">None</span>
@@ -529,6 +584,10 @@ export default function ImportProductsPage() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Product</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Images</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Materials</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Certs</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Props</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Files</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Details</th>
                     </tr>
                   </thead>
@@ -550,6 +609,10 @@ export default function ImportProductsPage() {
                           <StatusBadge status={d.status} />
                         </td>
                         <td className="px-4 py-3 text-gray-600">{d.images_count ?? '-'}</td>
+                        <td className="px-4 py-3 text-gray-600">{d.materials_count ?? '-'}</td>
+                        <td className="px-4 py-3 text-gray-600">{d.certifications_count ?? '-'}</td>
+                        <td className="px-4 py-3 text-gray-600">{d.properties_count ?? '-'}</td>
+                        <td className="px-4 py-3 text-gray-600">{d.files_count ?? '-'}</td>
                         <td className="px-4 py-3 text-sm text-gray-500">{d.error || '-'}</td>
                       </tr>
                     ))}
