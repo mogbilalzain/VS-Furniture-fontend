@@ -53,7 +53,7 @@ const ProductModalNew = ({
       if (product.property_values) {
         const propertyValues = {};
         product.property_values.forEach(value => {
-          const propertyId = value.category_property_id;
+          const propertyId = value.category_property?.id || value.category_property_id;
           if (!propertyValues[propertyId]) {
             propertyValues[propertyId] = [];
           }

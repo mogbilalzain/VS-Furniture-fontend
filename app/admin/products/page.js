@@ -285,7 +285,7 @@ export default function AdminProducts() {
             });
             
             if (propertyValueIds.length > 0) {
-              await productsAPI.updateProperties(productId, { property_value_ids: propertyValueIds });
+              await productsAPI.updateProperties(productId, { property_values: propertyValueIds });
               console.log('✅ Property values saved successfully');
             }
           } catch (propertyError) {

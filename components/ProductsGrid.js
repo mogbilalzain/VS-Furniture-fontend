@@ -169,13 +169,13 @@ const ProductsGrid = ({
       </div>
 
       {/* التنقل بين الصفحات */}
-      {pagination && pagination.last_page > 1 && (
+      {pagination && pagination.pages > 1 && (
         <div className="mt-8 flex justify-center">
           <nav className="flex items-center space-x-2" dir="ltr">
             {/* الصفحة Previousة */}
             <button
-              onClick={() => onPageChange && onPageChange(pagination.current_page - 1)}
-              disabled={pagination.current_page <= 1}
+              onClick={() => onPageChange && onPageChange(pagination.page - 1)}
+              disabled={pagination.page <= 1}
               className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRightIcon className="w-4 h-4 mr-1" />
@@ -184,16 +184,16 @@ const ProductsGrid = ({
 
             {/* أرقام الصفحات */}
             <div className="flex space-x-1">
-              {[...Array(Math.min(5, pagination.last_page))].map((_, index) => {
+              {[...Array(Math.min(5, pagination.pages))].map((_, index) => {
                 let pageNumber;
-                if (pagination.last_page <= 5) {
+                if (pagination.pages <= 5) {
                   pageNumber = index + 1;
-                } else if (pagination.current_page <= 3) {
+                } else if (pagination.page <= 3) {
                   pageNumber = index + 1;
-                } else if (pagination.current_page >= pagination.last_page - 2) {
-                  pageNumber = pagination.last_page - 4 + index;
+                } else if (pagination.page >= pagination.pages - 2) {
+                  pageNumber = pagination.pages - 4 + index;
                 } else {
-                  pageNumber = pagination.current_page - 2 + index;
+                  pageNumber = pagination.page - 2 + index;
                 }
 
                 return (
@@ -201,7 +201,7 @@ const ProductsGrid = ({
                     key={pageNumber}
                     onClick={() => onPageChange && onPageChange(pageNumber)}
                     className={`px-3 py-2 text-sm font-medium rounded-md ${
-                      pageNumber === pagination.current_page
+                      pageNumber === pagination.page
                         ? 'bg-blue-600 text-white'
                         : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
                     }`}
@@ -214,8 +214,8 @@ const ProductsGrid = ({
 
             {/* Next page */}
             <button
-              onClick={() => onPageChange && onPageChange(pagination.current_page + 1)}
-              disabled={pagination.current_page >= pagination.last_page}
+              onClick={() => onPageChange && onPageChange(pagination.page + 1)}
+              disabled={pagination.page >= pagination.pages}
               className="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next

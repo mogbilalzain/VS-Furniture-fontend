@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { propertiesAPI } from '../lib/api';
 
 const PropertiesFilter = ({ 
   categoryId, 
+  categorySlug,
   selectedFilters = {}, 
   onFiltersChange,
+  onPropertiesLoaded,
   className = "",
   isCollapsed = false
 }) => {
@@ -12,81 +14,68 @@ const PropertiesFilter = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedProperties, setExpandedProperties] = useState({});
-  const [searchTerm, setSearchTerm] = useState('');
+  const prevFiltersRef = useRef(null);
 
   useEffect(() => {
     if (categoryId) {
-      loadCategoryProperties();
+      loadFacetedProperties({});
     }
   }, [categoryId]);
 
-  // Initialize all properties as expanded when properties are loaded
+  useEffect(() => {
+    if (!categoryId) return;
+    const filtersKey = JSON.stringify(selectedFilters);
+    if (prevFiltersRef.current === filtersKey) return;
+    prevFiltersRef.current = filtersKey;
+    loadFacetedProperties(selectedFilters);
+  }, [categoryId, selectedFilters]);
+
   useEffect(() => {
     if (properties.length > 0) {
-      const initialExpanded = {};
-      properties.forEach(property => {
-        initialExpanded[property.id] = true; // Start with all properties expanded
+      setExpandedProperties(prev => {
+        if (Object.keys(prev).length > 0) return prev;
+        const initial = {};
+        properties.forEach(p => { initial[p.id] = true; });
+        return initial;
       });
-      setExpandedProperties(initialExpanded);
     }
   }, [properties]);
 
-  const togglePropertyExpansion = (propertyId) => {
-    setExpandedProperties(prev => ({
-      ...prev,
-      [propertyId]: !prev[propertyId]
-    }));
-  };
-
-  const loadCategoryProperties = async () => {
+  const loadFacetedProperties = async (filters) => {
     try {
-      setLoading(true);
+      if (Object.keys(filters).length === 0) setLoading(true);
       setError(null);
-      
-      const response = await propertiesAPI.getCategoryProperties(categoryId);
-      
+      const response = await propertiesAPI.getFacetedProperties(categoryId, categorySlug, filters);
       if (response.success) {
-        setProperties(response.data.properties || []);
+        const props = response.data.properties || [];
+        setProperties(props);
+        if (onPropertiesLoaded) onPropertiesLoaded(props);
       } else {
-        setError('Failed to load category properties');
+        setError('Failed to load filters');
       }
     } catch (err) {
-      console.error('Error loading category properties:', err);
-      setError('Error loading properties');
+      console.error('Error loading faceted properties:', err);
+      setError('Error loading filters');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePropertyChange = (propertyName, valueId, checked) => {
-    const currentValues = selectedFilters[propertyName] || [];
-    
-    let newValues;
-    if (checked) {
-      newValues = [...currentValues, valueId];
-    } else {
-      newValues = currentValues.filter(id => id !== valueId);
-    }
-    
-    const newFilters = {
-      ...selectedFilters,
-      [propertyName]: newValues
-    };
-    
-    // Remove empty properties
-    if (newValues.length === 0) {
-      delete newFilters[propertyName];
-    }
-    
-    onFiltersChange(newFilters);
+  const toggleExpansion = (propertyId) => {
+    setExpandedProperties(prev => ({ ...prev, [propertyId]: !prev[propertyId] }));
   };
 
-  const handleRadioChange = (propertyName, valueId) => {
-    const newFilters = {
-      ...selectedFilters,
-      [propertyName]: [valueId]
-    };
-    
+  const handleValueClick = (propertyName, valueId) => {
+    const currentValues = selectedFilters[propertyName] || [];
+    const isSelected = currentValues.includes(valueId);
+    let newValues;
+    if (isSelected) {
+      newValues = currentValues.filter(id => id !== valueId);
+    } else {
+      newValues = [...currentValues, valueId];
+    }
+    const newFilters = { ...selectedFilters, [propertyName]: newValues };
+    if (newValues.length === 0) delete newFilters[propertyName];
     onFiltersChange(newFilters);
   };
 
@@ -98,31 +87,32 @@ const PropertiesFilter = ({
     return Object.values(selectedFilters).reduce((total, values) => total + values.length, 0);
   };
 
-  // Filter values based on search term
-  const getFilteredValues = (values) => {
-    if (!searchTerm.trim()) {
-      return values;
+  const getValueDisplayName = useCallback((propertyName, valueId) => {
+    for (const prop of properties) {
+      if (prop.name === propertyName) {
+        const val = prop.values.find(v => v.id === valueId);
+        return val ? (val.display_name || val.value) : valueId;
+      }
     }
-    return values.filter(value => 
-      (value.display_name || value.value).toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
+    return valueId;
+  }, [properties]);
 
-  if (loading) {
+  const visibleProperties = properties.filter(property => {
+    const values = property.values || [];
+    return values.some(v => v.product_count > 0);
+  });
+
+  if (loading && properties.length === 0) {
     return (
-      <div className={`bg-white p-6 rounded-lg shadow-md ${className}`}>
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded mb-4"></div>
-          <div className="space-y-4">
+      <div className={`${className} ${isCollapsed ? 'hidden' : ''}`}>
+        <div className="py-4">
+          <div className="animate-pulse space-y-6">
             {[1, 2, 3].map(i => (
               <div key={i}>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-2/3 mb-3"></div>
+                <div className="space-y-2 ml-1">
                   {[1, 2, 3].map(j => (
-                    <div key={j} className="flex items-center">
-                      <div className="w-4 h-4 bg-gray-200 rounded mr-2"></div>
-                      <div className="h-3 bg-gray-200 rounded flex-1"></div>
-                    </div>
+                    <div key={j} className="h-3 bg-gray-100 rounded w-3/4"></div>
                   ))}
                 </div>
               </div>
@@ -135,12 +125,12 @@ const PropertiesFilter = ({
 
   if (error) {
     return (
-      <div className={`bg-white p-6 rounded-lg shadow-md ${className}`}>
-        <div className="text-center text-red-600">
-          <p className="mb-2">{error}</p>
+      <div className={`${className} ${isCollapsed ? 'hidden' : ''}`}>
+        <div className="text-center py-6">
+          <p className="text-sm text-gray-500 mb-2">{error}</p>
           <button 
-            onClick={loadCategoryProperties}
-            className="text-sm text-blue-600 hover:text-blue-800"
+            onClick={() => loadFacetedProperties(selectedFilters)}
+            className="text-sm text-vs-green hover:underline"
           >
             Try Again
           </button>
@@ -149,155 +139,118 @@ const PropertiesFilter = ({
     );
   }
 
-  if (properties.length === 0) {
+  if (visibleProperties.length === 0 && !loading) {
     return (
-      <div className={`bg-white p-6 rounded-lg shadow-md ${className}`}>
-        <p className="text-gray-500 text-center">No properties available for this category</p>
+      <div className={`${className} ${isCollapsed ? 'hidden' : ''}`}>
+        <p className="text-sm text-gray-400 py-4">No filters available</p>
       </div>
     );
   }
 
   return (
-    <div className={`bg-white p-6 rounded-lg ${className} ${isCollapsed ? 'hidden' : ''}`}>
-      {/* Search Box */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Search in category
-        </label>
-        <div className="relative flex">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder=""
-            className="flex-1 px-3 py-2 border border-gray-300 border-r-0 focus:outline-none focus:border-gray-400"
-          />
-          <button 
-            className="bg-yellow-400 hover:bg-yellow-500 px-4 py-2 border border-yellow-400 transition-colors flex items-center justify-center"
-            onClick={() => {/* Search functionality already handled by onChange */}}
-          >
-            <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Filter Products
+    <div className={`${className} ${isCollapsed ? 'hidden' : ''}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2 pb-3 border-b border-gray-200">
+        <span className="text-xs font-semibold tracking-widest uppercase text-gray-500">
+          Filter
           {getSelectedCount() > 0 && (
-            <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+            <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-vs-green text-white text-[10px] font-bold">
               {getSelectedCount()}
             </span>
           )}
-        </h3>
+        </span>
         {getSelectedCount() > 0 && (
           <button 
             onClick={clearAllFilters}
-            className="text-sm text-red-600 hover:text-red-800 transition-colors"
+            className="text-xs text-gray-400 hover:text-black transition-colors underline"
           >
-            Clear All
+            Clear all
           </button>
         )}
       </div>
 
-      <div className="space-y-6">
-        {properties.filter(property => {
-          const filteredValues = getFilteredValues(property.values || []);
-          return !searchTerm.trim() || filteredValues.length > 0;
-        }).length === 0 && searchTerm.trim() ? (
-          <div className="text-center py-8">
-            <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <p className="text-gray-500 text-sm">No filters found for "{searchTerm}"</p>
-            <button 
-              onClick={() => setSearchTerm('')}
-              className="text-blue-600 hover:text-blue-800 text-sm mt-2"
-            >
-              Clear search
-            </button>
-          </div>
-        ) : (
-          properties.map((property) => {
-            const isExpanded = expandedProperties[property.id];
-            const filteredValues = getFilteredValues(property.values || []);
-            
-            // Hide property if no values match search term
-            if (searchTerm.trim() && filteredValues.length === 0) {
-              return null;
-            }
-            
-            return (
-            <div key={property.id} className="border-b border-gray-100 pb-4 last:border-b-0">
+      {/* Selected filters summary */}
+      {getSelectedCount() > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-4 pb-3 border-b border-gray-100">
+          {Object.entries(selectedFilters).map(([propName, valueIds]) =>
+            valueIds.map(vid => (
               <button
-                onClick={() => togglePropertyExpansion(property.id)}
-                className="w-full flex items-center justify-between py-3 text-left font-medium text-gray-800 hover:text-gray-600 transition-colors group"
+                key={`${propName}-${vid}`}
+                onClick={() => handleValueClick(propName, vid)}
+                className="inline-flex items-center gap-1 bg-gray-900 text-white text-xs px-2.5 py-1 hover:bg-gray-700 transition-colors"
               >
-                <span className="flex items-center text-sm">
+                <span>{getValueDisplayName(propName, vid)}</span>
+                <svg className="w-3 h-3 ml-0.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Property accordion sections */}
+      <div className="space-y-0">
+        {visibleProperties.map((property) => {
+          const isExpanded = expandedProperties[property.id] ?? true;
+          const visibleValues = (property.values || []).filter(v => v.product_count > 0);
+          const selectedInProperty = selectedFilters[property.name] || [];
+
+          return (
+            <div key={property.id} className="border-b border-gray-100 last:border-b-0">
+              <button
+                onClick={() => toggleExpansion(property.id)}
+                className="w-full flex items-center justify-between py-3.5 text-left group"
+              >
+                <span className="text-sm font-medium text-gray-800 group-hover:text-black transition-colors">
                   {property.display_name || property.name}
-                  {property.is_required && (
-                    <span className="text-red-500 ml-1">*</span>
+                  {selectedInProperty.length > 0 && (
+                    <span className="ml-1.5 text-xs text-vs-green font-semibold">
+                      ({selectedInProperty.length})
+                    </span>
                   )}
                 </span>
                 <svg 
-                  className={`w-4 h-4 transition-transform duration-300 text-gray-500 group-hover:text-gray-700 ${isExpanded ? 'transform rotate-180' : ''}`}
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
+                  className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-            
-            {isExpanded && (
-              <div className="space-y-1 max-h-48 overflow-y-auto pl-2 animate-slideDown">
-                {filteredValues.map((value) => {
-                  const isSelected = selectedFilters[property.name]?.includes(value.id) || false;
-                  
-                  return (
-                    <label 
-                      key={value.id} 
-                      className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors group"
-                    >
-                      <input
-                        type={property.input_type === 'radio' ? 'radio' : 'checkbox'}
-                        name={property.input_type === 'radio' ? property.name : undefined}
-                        checked={isSelected}
-                        onChange={(e) => {
-                          if (property.input_type === 'radio') {
-                            handleRadioChange(property.name, value.id);
-                          } else {
-                            handlePropertyChange(property.name, value.id, e.target.checked);
-                          }
-                        }}
-                        className="mr-3 text-blue-600 focus:ring-blue-500 h-4 w-4"
-                      />
-                      <span className="text-sm text-gray-700 flex-1 group-hover:text-gray-900">
-                        {value.display_name || value.value}
-                      </span>
-                      {value.product_count !== undefined && (
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+
+              {isExpanded && (
+                <div className="pb-3 space-y-0.5">
+                  {visibleValues.map((value) => {
+                    const isSelected = selectedInProperty.includes(value.id);
+                    return (
+                      <button
+                        key={value.id}
+                        onClick={() => handleValueClick(property.name, value.id)}
+                        className={`w-full text-left px-2 py-1.5 text-sm transition-colors flex items-center justify-between group/item ${
+                          isSelected
+                            ? 'text-black font-semibold'
+                            : 'text-gray-600 hover:text-black'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-vs-green flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                          <span>{value.display_name || value.value}</span>
+                        </span>
+                        <span className={`text-xs tabular-nums ${isSelected ? 'text-gray-500' : 'text-gray-400'}`}>
                           {value.product_count}
                         </span>
-                      )}
-                    </label>
-                  );
-                })}
-              </div>
-            )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
-        }))}
-      </div>
-
-      {/* Additional info */}
-      <div className="mt-6 pt-4 border-t border-gray-100">
-        <p className="text-xs text-gray-500 text-center">
-          Select multiple properties for more accurate results
-        </p>
+        })}
       </div>
     </div>
   );

@@ -6,8 +6,7 @@ import Header from '../../../../components/Header';
 import Footer from '../../../../components/Footer';
 import PropertiesFilter from '../../../../components/PropertiesFilter';
 import ProductsGrid from '../../../../components/ProductsGrid';
-import ProductFilters from '../../../../components/ProductFilters';
-import { categoriesAPI, productsAPI, propertiesAPI } from '../../../../lib/api';
+import { categoriesAPI, productsAPI } from '../../../../lib/api';
 
 export default function CategoryProducts() {
   const params = useParams();
@@ -25,6 +24,7 @@ export default function CategoryProducts() {
   const [error, setError] = useState(null);
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [propertiesData, setPropertiesData] = useState([]);
 
     // Handle scroll for sticky control bar
   useEffect(() => {
@@ -424,8 +424,10 @@ export default function CategoryProducts() {
               {category && (
                 <PropertiesFilter
                   categoryId={category.id}
+                  categorySlug={category.slug}
                   selectedFilters={selectedFilters}
                   onFiltersChange={handleFiltersChange}
+                  onPropertiesLoaded={setPropertiesData}
                   isCollapsed={filtersCollapsed}
                   className="mb-6"
                 />
@@ -439,30 +441,43 @@ export default function CategoryProducts() {
                 <div className="mb-6">
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(selectedFilters).map(([filterName, values]) => 
-                      values.map((value, index) => (
-                        <span 
-                          key={`${filterName}-${value}-${index}`}
-                          className="inline-flex items-center bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
-                        >
-                          {filterName}
-                          <button
-                            onClick={() => {
-                              const newFilters = { ...selectedFilters };
-                              newFilters[filterName] = newFilters[filterName].filter(v => v !== value);
-                              if (newFilters[filterName].length === 0) {
-                                delete newFilters[filterName];
-                              }
-                              handleFiltersChange(newFilters);
-                            }}
-                            className="ml-2 text-gray-500 hover:text-gray-700"
+                      values.map((valueId, index) => {
+                        const prop = propertiesData.find(p => p.name === filterName);
+                        const propDisplayName = prop ? (prop.display_name || prop.name) : filterName;
+                        const val = prop?.values?.find(v => v.id === valueId);
+                        const valDisplayName = val ? (val.display_name || val.value) : valueId;
+                        return (
+                          <span 
+                            key={`${filterName}-${valueId}-${index}`}
+                            className="inline-flex items-center bg-gray-900 text-white px-3 py-1.5 text-sm"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </span>
-                      ))
+                            <span className="text-gray-400 mr-1">{propDisplayName}:</span>
+                            {valDisplayName}
+                            <button
+                              onClick={() => {
+                                const newFilters = { ...selectedFilters };
+                                newFilters[filterName] = newFilters[filterName].filter(v => v !== valueId);
+                                if (newFilters[filterName].length === 0) {
+                                  delete newFilters[filterName];
+                                }
+                                handleFiltersChange(newFilters);
+                              }}
+                              className="ml-2 text-gray-400 hover:text-white"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </span>
+                        );
+                      })
                     )}
+                    <button 
+                      onClick={() => handleFiltersChange({})}
+                      className="text-sm text-gray-500 hover:text-black underline px-2 py-1.5"
+                    >
+                      Clear all
+                    </button>
                   </div>
                 </div>
               )}
