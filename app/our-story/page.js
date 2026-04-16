@@ -129,85 +129,20 @@ const OurStoryPage = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">A Global Vision, Regionally Grounded</h2>
             <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-              VS is present in Germany, the United States, the UAE, and Australia — with Saudi Arabia coming soon. Every location shares one mission: to create environments that inspire learning and growth.
+              VS is present in Germany, France, the United States, the UAE, Saudi Arabia, Southeast Asia, and Australia. Every location shares one mission: to create environments that inspire learning and growth.
             </p>
           </div>
 
           {/* World Map with VS Locations */}
-          <div className="relative h-[400px] bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg mb-12 overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <svg className="w-full h-full" viewBox="0 0 800 400" fill="none">
-                <defs>
-                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#3b82f6" strokeWidth="1"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid)" />
-              </svg>
-            </div>
-            
-            {/* VS Locations */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                {/* Germany */}
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-[#FFD700] rounded-full flex items-center justify-center mb-2 shadow-lg">
-                    <svg className="w-6 h-6 text-gray-800" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-gray-800">Germany</h3>
-                  <p className="text-sm text-gray-600">Headquarters</p>
-                </div>
-                
-                {/* UAE */}
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-[#FFD700] rounded-full flex items-center justify-center mb-2 shadow-lg">
-                    <svg className="w-6 h-6 text-gray-800" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-gray-800">UAE</h3>
-                  <p className="text-sm text-gray-600">Middle East HQ</p>
-                </div>
-                
-                {/* USA */}
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-[#FFD700] rounded-full flex items-center justify-center mb-2 shadow-lg">
-                    <svg className="w-6 h-6 text-gray-800" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-gray-800">USA</h3>
-                  <p className="text-sm text-gray-600">Americas</p>
-                </div>
-                
-                {/* Saudi Arabia */}
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-orange-400 rounded-full flex items-center justify-center mb-2 shadow-lg">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-gray-800">Saudi Arabia</h3>
-                  <p className="text-sm text-orange-600">Coming Soon</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Connecting Lines */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none">
-              <defs>
-                <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" style={{stopColor:'#FFD700', stopOpacity:0.3}} />
-                  <stop offset="100%" style={{stopColor:'#FFD700', stopOpacity:0.1}} />
-                </linearGradient>
-              </defs>
-              <path d="M 200 200 Q 400 150 600 200" stroke="url(#connectionGradient)" strokeWidth="2" fill="none" strokeDasharray="5,5">
-                <animate attributeName="stroke-dashoffset" values="0;10" dur="2s" repeatCount="indefinite"/>
-              </path>
-            </svg>
+          <div className="relative w-full rounded-lg mb-12 overflow-hidden">
+            <Image
+              src="/images/vs-global-map.png"
+              alt="Countries in which VS is represented - VS America, Mobilier VS (France), VS Furniture (Germany), VS furniture industrial (Saudi Arabia), VS Middle East (UAE), VS Southeast Asia, VS Furniture Australia"
+              width={1920}
+              height={900}
+              className="w-full h-auto object-contain"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+            />
           </div>
         </div>
       </section>

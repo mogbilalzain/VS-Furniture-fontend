@@ -10,6 +10,7 @@ import {
   PlusIcon 
 } from '@heroicons/react/24/outline';
 import { productImagesAPI } from '../lib/api';
+import ProductPropertyConfig from './ProductPropertyConfig';
 
 export default function ProductConfigurator({ product }) {
   const [selectedFrame, setSelectedFrame] = useState('default');
@@ -333,91 +334,11 @@ export default function ProductConfigurator({ product }) {
                 )}
               </div>
 
-              {/* Adjust configuration */}
-              {/* <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h4 className="text-lg font-medium text-gray-900 mb-6">Adjust configuration</h4>
-                <p className="text-sm text-gray-600 mb-6">
-                  Not all options shown are available for all products – please contact us if you have any questions.
-                </p>
-
-                <div className="space-y-4">
-                  {/* Frame Options */}
-                  {/* <div className="border border-gray-200 rounded-lg">
-                    <button
-                      onClick={() => setShowFrameOptions(!showFrameOptions)}
-                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
-                    >
-                      <span className="font-medium text-gray-900">Frame</span>
-                      <PlusIcon className={`h-5 w-5 text-gray-400 transition-transform ${showFrameOptions ? 'rotate-45' : ''}`} />
-                    </button>
-                    
-                    {showFrameOptions && (
-                      <div className="px-4 pb-4 border-t border-gray-100">
-                        <div className="grid grid-cols-3 gap-3 mt-4">
-                          {frameOptions.map((frame) => (
-                            <button
-                              key={frame.id}
-                              onClick={() => setSelectedFrame(frame.id)}
-                              className={`aspect-square rounded-lg border-2 transition-colors p-2 ${
-                                selectedFrame === frame.id 
-                                  ? 'border-yellow-400 bg-yellow-50' 
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <img
-                                src={frame.image}
-                                alt={frame.name}
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                  e.target.src = '/images/placeholder-product.jpg';
-                                }}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div> */}
-
-                  {/* Top/Surface Options */}
-                  {/* <div className="border border-gray-200 rounded-lg">
-                    <button
-                      onClick={() => setShowSurfaceOptions(!showSurfaceOptions)}
-                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
-                    >
-                      <span className="font-medium text-gray-900">Top/surface</span>
-                      <PlusIcon className={`h-5 w-5 text-gray-400 transition-transform ${showSurfaceOptions ? 'rotate-45' : ''}`} />
-                    </button>
-                    
-                    {showSurfaceOptions && (
-                      <div className="px-4 pb-4 border-t border-gray-100">
-                        <div className="grid grid-cols-3 gap-3 mt-4">
-                          {surfaceOptions.map((surface) => (
-                            <button
-                              key={surface.id}
-                              onClick={() => setSelectedSurface(surface.id)}
-                              className={`aspect-square rounded-lg border-2 transition-colors p-2 ${
-                                selectedSurface === surface.id 
-                                  ? 'border-yellow-400 bg-yellow-50' 
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <img
-                                src={surface.image}
-                                alt={surface.name}
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                  e.target.src = '/images/placeholder-product.jpg';
-                                }}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div> *
-                </div>
-              </div> */}
+              {/* Adjust configuration - Property Dropdowns */}
+              <ProductPropertyConfig
+                productId={product?.id}
+                categoryId={product?.category_id}
+              />
             </div>
           </div>
         </div>

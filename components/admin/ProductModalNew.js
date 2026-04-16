@@ -773,81 +773,106 @@ const ProductModalNew = ({
                 <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
                   No properties available for this category.
                 </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                  {categoryProperties.map((property) => (
-                    <div
-                      key={property.id}
-                      style={{
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        padding: '1.5rem',
-                        background: '#f9fafb'
-                      }}
-                    >
-                      <div style={{ marginBottom: '1rem' }}>
-                        <h4 style={{
-                          fontSize: '0.875rem',
-                          fontWeight: 600,
-                          color: '#111827',
-                          margin: '0 0 0.25rem 0'
-                        }}>
-                          {property.display_name}
-                          {property.is_required && (
-                            <span style={{ color: '#dc2626', marginLeft: '0.25rem' }}>*</span>
-                          )}
-                        </h4>
-                        {property.description && (
-                          <p style={{
-                            fontSize: '0.75rem',
-                            color: '#6b7280',
-                            margin: 0
-                          }}>
-                            {property.description}
-                          </p>
+              ) : (() => {
+                const grouped = {};
+                const ungrouped = [];
+                categoryProperties.forEach(prop => {
+                  if (prop.property_group) {
+                    const gId = prop.property_group.id;
+                    if (!grouped[gId]) grouped[gId] = { group: prop.property_group, properties: [] };
+                    grouped[gId].properties.push(prop);
+                  } else {
+                    ungrouped.push(prop);
+                  }
+                });
+                const sortedGroupKeys = Object.keys(grouped).sort((a, b) =>
+                  (grouped[a].group.sort_order || 0) - (grouped[b].group.sort_order || 0)
+                );
+
+                const renderPropertyCard = (property) => (
+                  <div
+                    key={property.id}
+                    style={{
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '1.5rem',
+                      background: '#f9fafb'
+                    }}
+                  >
+                    <div style={{ marginBottom: '1rem' }}>
+                      <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827', margin: '0 0 0.25rem 0' }}>
+                        {property.display_name}
+                        {property.is_required && (
+                          <span style={{ color: '#dc2626', marginLeft: '0.25rem' }}>*</span>
                         )}
-                      </div>
-                      
-                      {property.property_values && property.property_values.length > 0 ? (
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                          gap: '0.5rem'
-                        }}>
-                          {property.property_values.map((value) => (
-                            <label
-                              key={value.id}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.5rem',
-                                background: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '6px',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={(selectedPropertyValues[property.id] || []).includes(value.id)}
-                                onChange={(e) => handlePropertyValueChange(property.id, value.id, e.target.checked)}
-                              />
-                              <span style={{ fontSize: '0.875rem', color: '#374151' }}>
-                                {value.display_name}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                          No values available for this property.
-                        </div>
+                      </h4>
+                      {property.description && (
+                        <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>{property.description}</p>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
+                    {property.property_values && property.property_values.length > 0 ? (
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                        gap: '0.5rem'
+                      }}>
+                        {property.property_values.map((value) => (
+                          <label key={value.id} style={{
+                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                            padding: '0.5rem', background: 'white',
+                            border: '1px solid #e5e7eb', borderRadius: '6px', cursor: 'pointer'
+                          }}>
+                            <input
+                              type="checkbox"
+                              checked={(selectedPropertyValues[property.id] || []).includes(value.id)}
+                              onChange={(e) => handlePropertyValueChange(property.id, value.id, e.target.checked)}
+                            />
+                            <span style={{ fontSize: '0.875rem', color: '#374151' }}>{value.display_name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                        No values available for this property.
+                      </div>
+                    )}
+                  </div>
+                );
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    {sortedGroupKeys.map(gId => (
+                      <div key={`group-${gId}`} style={{
+                        border: '2px solid #bae6fd',
+                        borderRadius: '10px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          background: '#f0f9ff',
+                          padding: '0.75rem 1.25rem',
+                          borderBottom: '1px solid #bae6fd',
+                          display: 'flex', alignItems: 'center', gap: '0.5rem'
+                        }}>
+                          <i className="fas fa-layer-group" style={{ color: '#0369a1', fontSize: '0.875rem' }}></i>
+                          <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#0c4a6e', margin: 0 }}>
+                            {grouped[gId].group.display_name}
+                          </h4>
+                          <span style={{
+                            background: '#e0f2fe', color: '#0369a1',
+                            padding: '0.125rem 0.5rem', borderRadius: '9999px', fontSize: '0.6875rem'
+                          }}>
+                            {grouped[gId].properties.length} properties
+                          </span>
+                        </div>
+                        <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {grouped[gId].properties.map(renderPropertyCard)}
+                        </div>
+                      </div>
+                    ))}
+                    {ungrouped.map(renderPropertyCard)}
+                  </div>
+                );
+              })()}
             </div>
           )}
 

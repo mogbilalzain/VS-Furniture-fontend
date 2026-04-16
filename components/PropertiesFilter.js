@@ -189,68 +189,118 @@ const PropertiesFilter = ({
         </div>
       )}
 
-      {/* Property accordion sections */}
+      {/* Property accordion sections (grouped + ungrouped) */}
       <div className="space-y-0">
-        {visibleProperties.map((property) => {
-          const isExpanded = expandedProperties[property.id] ?? true;
-          const visibleValues = (property.values || []).filter(v => v.product_count > 0);
-          const selectedInProperty = selectedFilters[property.name] || [];
+        {(() => {
+          const grouped = {};
+          const ungrouped = [];
+          visibleProperties.forEach(prop => {
+            if (prop.property_group) {
+              const gId = prop.property_group.id;
+              if (!grouped[gId]) grouped[gId] = { group: prop.property_group, properties: [] };
+              grouped[gId].properties.push(prop);
+            } else {
+              ungrouped.push(prop);
+            }
+          });
+          const sortedGroupKeys = Object.keys(grouped).sort((a, b) =>
+            (grouped[a].group.sort_order || 0) - (grouped[b].group.sort_order || 0)
+          );
+
+          const renderPropertyAccordion = (property) => {
+            const isExpanded = expandedProperties[property.id] ?? true;
+            const visibleValues = (property.values || []).filter(v => v.product_count > 0);
+            const selectedInProperty = selectedFilters[property.name] || [];
+
+            return (
+              <div key={property.id} className="border-b border-gray-100 last:border-b-0">
+                <button
+                  onClick={() => toggleExpansion(property.id)}
+                  className="w-full flex items-center justify-between py-3.5 text-left group"
+                >
+                  <span className="text-sm font-medium text-gray-800 group-hover:text-black transition-colors">
+                    {property.display_name || property.name}
+                    {selectedInProperty.length > 0 && (
+                      <span className="ml-1.5 text-xs text-vs-green font-semibold">
+                        ({selectedInProperty.length})
+                      </span>
+                    )}
+                  </span>
+                  <svg 
+                    className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {isExpanded && (
+                  <div className="pb-3 space-y-0.5">
+                    {visibleValues.map((value) => {
+                      const isSelected = selectedInProperty.includes(value.id);
+                      return (
+                        <button
+                          key={value.id}
+                          onClick={() => handleValueClick(property.name, value.id)}
+                          className={`w-full text-left px-2 py-1.5 text-sm transition-colors flex items-center justify-between group/item ${
+                            isSelected
+                              ? 'text-black font-semibold'
+                              : 'text-gray-600 hover:text-black'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {isSelected && (
+                              <svg className="w-3 h-3 text-vs-green flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            <span>{value.display_name || value.value}</span>
+                          </span>
+                          <span className={`text-xs tabular-nums ${isSelected ? 'text-gray-500' : 'text-gray-400'}`}>
+                            {value.product_count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          };
 
           return (
-            <div key={property.id} className="border-b border-gray-100 last:border-b-0">
-              <button
-                onClick={() => toggleExpansion(property.id)}
-                className="w-full flex items-center justify-between py-3.5 text-left group"
-              >
-                <span className="text-sm font-medium text-gray-800 group-hover:text-black transition-colors">
-                  {property.display_name || property.name}
-                  {selectedInProperty.length > 0 && (
-                    <span className="ml-1.5 text-xs text-vs-green font-semibold">
-                      ({selectedInProperty.length})
-                    </span>
-                  )}
-                </span>
-                <svg 
-                  className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {isExpanded && (
-                <div className="pb-3 space-y-0.5">
-                  {visibleValues.map((value) => {
-                    const isSelected = selectedInProperty.includes(value.id);
-                    return (
-                      <button
-                        key={value.id}
-                        onClick={() => handleValueClick(property.name, value.id)}
-                        className={`w-full text-left px-2 py-1.5 text-sm transition-colors flex items-center justify-between group/item ${
-                          isSelected
-                            ? 'text-black font-semibold'
-                            : 'text-gray-600 hover:text-black'
-                        }`}
+            <>
+              {sortedGroupKeys.map(gId => {
+                const { group, properties: groupProps } = grouped[gId];
+                const isGroupExpanded = expandedProperties[`group-${gId}`] ?? true;
+                return (
+                  <div key={`group-${gId}`} className="border-b border-gray-200">
+                    <button
+                      onClick={() => setExpandedProperties(prev => ({ ...prev, [`group-${gId}`]: !prev[`group-${gId}`] ?? false }))}
+                      className="w-full flex items-center justify-between py-3 text-left bg-gray-50 px-2 -mx-0 group"
+                    >
+                      <span className="text-xs font-bold tracking-wider uppercase text-gray-500 group-hover:text-gray-700 transition-colors">
+                        {group.display_name}
+                      </span>
+                      <svg 
+                        className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isGroupExpanded ? 'rotate-180' : ''}`}
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"
                       >
-                        <span className="flex items-center gap-2">
-                          {isSelected && (
-                            <svg className="w-3 h-3 text-vs-green flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                          <span>{value.display_name || value.value}</span>
-                        </span>
-                        <span className={`text-xs tabular-nums ${isSelected ? 'text-gray-500' : 'text-gray-400'}`}>
-                          {value.product_count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {isGroupExpanded && (
+                      <div className="pl-2">
+                        {groupProps.map(renderPropertyAccordion)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {ungrouped.map(renderPropertyAccordion)}
+            </>
           );
-        })}
+        })()}
       </div>
     </div>
   );

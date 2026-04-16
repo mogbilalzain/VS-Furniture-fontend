@@ -20,13 +20,12 @@ const HomepageContentManager = () => {
   });
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [selectedVideoFile, setSelectedVideoFile] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
 
   const sections = [
     { value: 'real_spaces', label: 'REAL SPACES, REAL STORIES' },
-    { value: 'hero', label: 'Hero Section' },
     { value: 'what_we_do', label: 'What We Do' },
     { value: 'projects', label: 'Projects' },
-    { value: 'trusted_logos', label: 'Trusted Logos' }
   ];
 
   const contentTypes = [
@@ -60,22 +59,40 @@ const HomepageContentManager = () => {
       setLoading(true);
       let submitData = { ...formData };
       
-      // Upload video file if selected
       if (selectedVideoFile) {
         const uploadedVideoUrl = await handleVideoUpload(selectedVideoFile);
         if (uploadedVideoUrl) {
           submitData.video_url = uploadedVideoUrl;
         } else {
           setLoading(false);
-          return; // Stop if video upload failed
+          return;
         }
       }
 
       let response;
-      if (editingContent) {
-        response = await apiClient.put(`/admin/homepage-content/${editingContent.id}`, submitData);
+      const hasFileUpload = !!selectedImageFile;
+
+      if (hasFileUpload) {
+        const fd = new FormData();
+        Object.entries(submitData).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '') {
+            fd.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : value);
+          }
+        });
+        fd.append('thumbnail', selectedImageFile);
+
+        if (editingContent) {
+          fd.append('_method', 'PUT');
+          response = await apiClient.postFormData(`/admin/homepage-content/${editingContent.id}`, fd);
+        } else {
+          response = await apiClient.postFormData('/admin/homepage-content', fd);
+        }
       } else {
-        response = await apiClient.post('/admin/homepage-content', submitData);
+        if (editingContent) {
+          response = await apiClient.put(`/admin/homepage-content/${editingContent.id}`, submitData);
+        } else {
+          response = await apiClient.post('/admin/homepage-content', submitData);
+        }
       }
 
       if (response.success) {
@@ -146,6 +163,7 @@ const HomepageContentManager = () => {
       is_active: true
     });
     setSelectedVideoFile(null);
+    setSelectedImageFile(null);
   };
 
   const handleVideoUpload = async (file) => {
@@ -261,7 +279,7 @@ const HomepageContentManager = () => {
                       className="w-16 h-12 object-cover rounded"
                     />
                   )}
-                  {content.type === 'image' && content.thumbnail && (
+                  {content.type === 'image' && content.thumbnail_url && (
                     <img
                       src={content.thumbnail_url}
                       alt={content.title}
@@ -429,6 +447,43 @@ const HomepageContentManager = () => {
                     <div className="mt-1 text-xs text-gray-500">
                       Max size: 50MB. Supported formats: MP4, MOV, AVI, WMV
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {formData.type === 'image' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Upload Image
+                  </label>
+                  {editingContent && editingContent.thumbnail_url && !selectedImageFile && (
+                    <div className="mb-2">
+                      <img
+                        src={editingContent.thumbnail_url}
+                        alt="Current image"
+                        className="w-32 h-24 object-cover rounded border border-gray-200"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Current image</p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/jpg,image/gif"
+                    onChange={(e) => setSelectedImageFile(e.target.files[0])}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  />
+                  {selectedImageFile && (
+                    <div className="mt-2">
+                      <img
+                        src={URL.createObjectURL(selectedImageFile)}
+                        alt="Preview"
+                        className="w-32 h-24 object-cover rounded border border-gray-200"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">{selectedImageFile.name}</p>
+                    </div>
+                  )}
+                  <div className="mt-1 text-xs text-gray-500">
+                    Max size: 2MB. Supported formats: JPEG, PNG, GIF
                   </div>
                 </div>
               )}
