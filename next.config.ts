@@ -1,13 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 
-  env: {
-    NEXT_PUBLIC_API_URL: 'http://localhost:8000/api',
-  },
   output: 'standalone',
   images: {
     remotePatterns: [
-      // Allow all localhost traffic
+      // Production
+      {
+        protocol: 'https',
+        hostname: 'vsme.ae',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.vsme.ae',
+      },
+      // Laravel dev (تأكّد أنها تطابق `php artisan serve`)
       {
         protocol: 'http',
         hostname: 'localhost',
@@ -21,21 +27,17 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '8000',
+        port: '8001',
       },
-      // Production domains
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '8001',
+      },
+      // الإبقاء على دومين الإنتاج القديم لأي صور قديمة مخزّنة
       {
         protocol: 'https',
         hostname: 'miminnovations.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.vsfurniture.com',
-      },
-      // Allow any HTTPS domain
-      {
-        protocol: 'https',
-        hostname: '**',
       },
     ],
     // Image optimization settings

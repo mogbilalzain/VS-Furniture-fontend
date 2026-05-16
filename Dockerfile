@@ -1,63 +1,50 @@
-# الإصدار المحسن من Dockerfile مع حل المشاكل
+# =====================================================================
+# VS Furniture Next.js Frontend (Node 18 - standalone)
+# Multi-stage:
+#   1) deps    : npm ci (مع devDependencies)
+#   2) builder : next build مع NEXT_PUBLIC_API_URL مضمّناً
+#   3) runner  : Node خفيف يشغّل server.js
+# =====================================================================
 
 FROM node:18-alpine AS base
 
-# Install dependencies only when needed
+# --- 1) Dependencies ---
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
 COPY package.json package-lock.json* ./
-
-# Install dependencies including devDependencies for build
 RUN npm ci
 
-# Rebuild the source code only when needed
+# --- 2) Builder ---
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
 
-# Fix: Set proper environment variables
+# تمرير عنوان الـ API وقت البناء (Next.js يدمج NEXT_PUBLIC_* أثناء build)
+ARG NEXT_PUBLIC_API_URL=https://vsme.ae/api
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Fix: Install missing Tailwind dependencies
-RUN npm install --save-dev @tailwindcss/postcss tailwindcss postcss autoprefixer
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-# Fix: Create proper jsconfig.json for path resolution
-RUN echo '{ \
-  "compilerOptions": { \
-    "baseUrl": ".", \
-    "paths": { \
-      "@/*": ["./*"] \
-    } \
-  } \
-}' > jsconfig.json
-
-# Build the application
 RUN npm run build
 
-# Production image, copy all the files and run next
+# --- 3) Runner ---
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
 
-# Copy built application
 COPY --from=builder /app/public ./public
 
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+RUN mkdir .next && chown nextjs:nodejs .next
 
-# Automatically leverage output traces to reduce image size
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 

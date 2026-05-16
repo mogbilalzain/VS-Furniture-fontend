@@ -10,7 +10,8 @@ const CURRENT_ENVIRONMENT = 'development'; // غيّر إلى 'development' لل
 const environments = {
   development: {
     // إعدادات بيئة التطوير (Development)
-    API_BASE_URL: 'http://127.0.0.1:8000/api',
+    // Fallback إذا لم يُضبط NEXT_PUBLIC_API_URL — استعمل 8001 إن كان المنفذ 8000 لديك محجوزاً من مشروع PHP آخر.
+    API_BASE_URL: 'http://127.0.0.1:8001/api',
     FRONTEND_BASE_URL: 'http://localhost:3000',
     IMAGE_BASE_URL: 'http://localhost:3000',
     
@@ -52,13 +53,26 @@ if (!currentConfig) {
   throw new Error(`❌ البيئة "${CURRENT_ENVIRONMENT}" غير موجودة في الإعدادات!`);
 }
 
+function stripTrailingSlash(u) {
+  return u.replace(/\/+$/, '');
+}
+
+/**
+ * عنوان الـ API الفعلي: يمتثل لـ NEXT_PUBLIC_API_URL (.env لـ Next) ثم الإعداد المحلي الحالي.
+ */
+const resolvedApiBaseUrl = stripTrailingSlash(
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
+    ? String(process.env.NEXT_PUBLIC_API_URL).trim()
+    : currentConfig.API_BASE_URL
+);
+
 // تصدير الإعدادات
 export const ENV_CONFIG = {
   // البيئة الحالية
   ENVIRONMENT: CURRENT_ENVIRONMENT,
   
   // URLs الأساسية
-  API_BASE_URL: currentConfig.API_BASE_URL,
+  API_BASE_URL: resolvedApiBaseUrl,
   FRONTEND_BASE_URL: currentConfig.FRONTEND_BASE_URL,
   IMAGE_BASE_URL: currentConfig.IMAGE_BASE_URL,
   
@@ -75,7 +89,7 @@ export const ENV_CONFIG = {
   // بناء URLs كاملة
   buildApiUrl: (endpoint) => {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    return `${currentConfig.API_BASE_URL}${cleanEndpoint}`;
+    return `${resolvedApiBaseUrl}${cleanEndpoint}`;
   },
   
   buildImageUrl: (imagePath) => {
@@ -90,7 +104,7 @@ export const ENV_CONFIG = {
     if (currentConfig.DEBUG_MODE) {
       console.log('🌍 Environment Info:');
       console.log('📍 Current Environment:', CURRENT_ENVIRONMENT);
-      console.log('🔗 API Base URL:', currentConfig.API_BASE_URL);
+      console.log('🔗 API Base URL:', resolvedApiBaseUrl);
       console.log('🖼️ Image Base URL:', currentConfig.IMAGE_BASE_URL);
       console.log('🐛 Debug Mode:', currentConfig.DEBUG_MODE);
     }
