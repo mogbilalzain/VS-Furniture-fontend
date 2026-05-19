@@ -7,6 +7,44 @@ import Footer from '../../components/Footer';
 import Image from 'next/image';
 import { categoriesAPI } from '../../lib/api';
 
+/**
+ * مكون صورة فئة مع fallback آمن.
+ *
+ * next/image لا يستجيب لتعديل e.target.src مباشرة (يخدم عبر /_next/image
+ * proxy)، لذا نستخدم state بحيث تتحول الصورة إلى placeholder عند الفشل.
+ */
+function CategoryImage({ category }) {
+  const placeholder = '/products/default-category.jpg';
+  const initial =
+    category.image_url || category.image || '/images/placeholder-product.jpg';
+  const [src, setSrc] = useState(initial);
+
+  // إن تغيّر مصدر الـ API لاحقاً، حدّث الحالة (مع تجاهل القيم الفارغة).
+  useEffect(() => {
+    if (initial && initial !== src) {
+      setSrc(initial);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category?.image_url, category?.image]);
+
+  return (
+    <Image
+      src={src}
+      alt={category.alt_text || category.name}
+      width={300}
+      height={200}
+      className="product-item-image mx-auto rounded-lg object-cover transition-shadow duration-300 w-full h-32 sm:h-40 lg:h-48"
+      onError={() => {
+        if (src !== placeholder) {
+          setSrc(placeholder);
+        }
+      }}
+      // يضمن عدم تحويل الـ placeholder المحلي عبر optimizer إن لزم
+      unoptimized={src.startsWith('/products/') || src.startsWith('/images/')}
+    />
+  );
+}
+
 export default function Products() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -71,16 +109,7 @@ export default function Products() {
                 className="product-item block text-center focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-lg p-3 sm:p-4 lg:p-6 transition-transform duration-300 hover:scale-105 bg-white shadow-sm hover:shadow-md border border-gray-100"
               >
                 <div className="product-image-container mb-3 sm:mb-4 lg:mb-6">
-                  <Image
-                    src={category.image_url || category.image || '/images/placeholder-product.jpg'}
-                    alt={category.alt_text || category.name}
-                    width={300}
-                    height={200}
-                    className="product-item-image mx-auto rounded-lg object-cover transition-shadow duration-300 w-full h-32 sm:h-40 lg:h-48"
-                    onError={(e) => {
-                      e.target.src = '/products/default-category.jpg';
-                    }}
-                  />
+                  <CategoryImage category={category} />
                 </div>
                 <div className="product-item-label text-gray-700 font-normal text-sm sm:text-base lg:text-lg leading-6 sm:leading-7">
                   {category.name}

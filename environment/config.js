@@ -23,9 +23,9 @@ const environments = {
   
   production: {
     // إعدادات بيئة الإنتاج (Production)
-    API_BASE_URL: 'https://miminnovations.com/vs-laravel-backend/api',
-    FRONTEND_BASE_URL: 'https://miminnovations.com/vs-laravel-backend/',
-    IMAGE_BASE_URL: 'https://miminnovations.com/vs-laravel-backend/',
+    API_BASE_URL: 'https://vsme.ae/api',
+    FRONTEND_BASE_URL: 'https://vsme.ae/',
+    IMAGE_BASE_URL: 'https://vsme.ae/',
     
     // إعدادات أخرى للإنتاج
     DEBUG_MODE:false,
