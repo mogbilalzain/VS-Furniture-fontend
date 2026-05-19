@@ -20,6 +20,7 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   // State for modal
   const [showModal, setShowModal] = useState(false);
@@ -278,7 +279,6 @@ export default function AdminProducts() {
         if (productData.property_values && Object.keys(productData.property_values).length > 0) {
           console.log('🔗 Saving property values...');
           try {
-            // Flatten property values for API
             const propertyValueIds = [];
             Object.values(productData.property_values).forEach(valueIds => {
               propertyValueIds.push(...valueIds);
@@ -290,31 +290,35 @@ export default function AdminProducts() {
             }
           } catch (propertyError) {
             console.error('❌ Error saving property values:', propertyError);
-            // Don't fail the entire operation for property errors
           }
         }
 
         await loadProducts();
         setShowModal(false);
         setSelectedProduct(null);
-        
-        const successMessage = selectedProduct 
-          ? '✅ Product updated successfully!' 
-          : '🎉 Product created successfully!';
-        alert(successMessage);
+        setError('');
+
+        const msg = selectedProduct 
+          ? 'تم تحديث المنتج بنجاح' 
+          : 'تم إنشاء المنتج بنجاح';
+        setSuccessMessage(msg);
+        setTimeout(() => setSuccessMessage(''), 4000);
+        return true;
       } else {
-        // Handle validation errors
+        // Modal stays open — show explicit error
         if (response.errors) {
           console.error('Validation errors:', response.errors);
-          const errorMessages = Object.values(response.errors).flat().join(', ');
-          setError(`Validation errors: ${errorMessages}`);
+          const lines = Object.values(response.errors).flat().join('\n');
+          setError(`أخطاء في التحقق:\n${lines}`);
         } else {
-          setError(response.message || 'Failed to save product');
+          setError(response.message || 'فشل حفظ المنتج');
         }
+        return false;
       }
     } catch (err) {
       console.error('Product save error:', err);
       setError(err.message || 'Failed to save product. An unexpected error occurred.');
+      return false;
     } finally {
       setLoading(false);
     }
@@ -460,11 +464,20 @@ export default function AdminProducts() {
         </div>
       </div>
 
+      {/* Success Banner */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center justify-between">
+          <div className="text-green-700 font-medium">✅ {successMessage}</div>
+          <button onClick={() => setSuccessMessage('')} className="text-green-500 hover:text-green-700 text-lg leading-none">×</button>
+        </div>
+      )}
+
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <div className="flex">
-            <div className="text-red-600">⚠️ {error}</div>
+          <div className="flex items-start justify-between">
+            <div className="text-red-600 whitespace-pre-line">⚠️ {error}</div>
+            <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 text-lg leading-none ml-4">×</button>
           </div>
         </div>
       )}

@@ -283,7 +283,13 @@ const ProductModalNew = ({
     }
     
     console.log('📤 Final submit data:', submitData);
-    await onSave(submitData);
+    const saved = await onSave(submitData);
+    // onSave returns true on success — clean up image state
+    if (saved) {
+      setImageFile(null);
+      setImagePreview(null);
+      setImageType('url');
+    }
   };
 
   if (!isOpen) return null;
