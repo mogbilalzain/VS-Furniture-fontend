@@ -39,6 +39,15 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'miminnovations.com',
       },
+      // imgproxy / media CDN
+      {
+        protocol: 'https',
+        hostname: 'media-vs.org',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.media-vs.org',
+      },
     ],
     // Image optimization settings
     formats: ['image/webp', 'image/avif'],

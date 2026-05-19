@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authStorage } from '../../../lib/localStorage-utils'
+import { settingsAPI } from '../../../lib/api'
 
 const SettingsPage = () => {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('general')
+  const [isSaving, setIsSaving] = useState(false)
   const [settings, setSettings] = useState({
     general: {
       siteName: 'V/S Furniture',
@@ -33,9 +35,31 @@ const SettingsPage = () => {
     if (!authStorage.isAuthenticatedAdmin()) {
       console.log('❌ Settings page - Not authenticated admin, redirecting...');
       router.replace('/admin/login');
-    } else {
-      console.log('✅ Settings page - User is authenticated admin');
+      return;
     }
+
+    console.log('✅ Settings page - User is authenticated admin');
+
+    // Hydrate persisted settings (currently only maintenance_mode is backed by the API).
+    const loadSystemSettings = async () => {
+      try {
+        const response = await settingsAPI.admin.getAll();
+        const data = response?.data || {};
+        if (typeof data.maintenance_mode !== 'undefined') {
+          setSettings(prev => ({
+            ...prev,
+            system: {
+              ...prev.system,
+              maintenanceMode: !!data.maintenance_mode,
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load system settings:', error);
+      }
+    };
+
+    loadSystemSettings();
   }, [router])
 
   const handleInputChange = (section, field, value) => {
@@ -48,8 +72,25 @@ const SettingsPage = () => {
     }))
   }
 
-  const saveSettings = () => {
-    alert('Settings saved successfully!')
+  const saveSettings = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      // Only the System tab has fields persisted to the backend right now.
+      // We always send the maintenance flag so toggling it from any tab is safe.
+      const enabled = !!settings.system.maintenanceMode;
+      await settingsAPI.admin.setMaintenance(enabled);
+      alert(
+        enabled
+          ? 'Maintenance mode enabled. Visitors will see the maintenance page.'
+          : 'Maintenance mode disabled. The site is now live for visitors.'
+      );
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      alert('Failed to save settings. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   const resetSettings = () => {
@@ -631,8 +672,9 @@ const SettingsPage = () => {
           >
             Reset
           </button>
-          <button 
+          <button
             onClick={saveSettings}
+            disabled={isSaving}
             style={{
               background: '#FFD700',
               color: '#000',
@@ -640,23 +682,26 @@ const SettingsPage = () => {
               padding: '0.75rem 1.5rem',
               border: 'none',
               borderRadius: '8px',
-              cursor: 'pointer',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.7 : 1,
               transition: 'all 0.3s ease',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem'
             }}
             onMouseEnter={(e) => {
+              if (isSaving) return
               e.target.style.background = '#e6c200'
               e.target.style.transform = 'translateY(-2px)'
             }}
             onMouseLeave={(e) => {
+              if (isSaving) return
               e.target.style.background = '#FFD700'
               e.target.style.transform = 'translateY(0)'
             }}
           >
-            <i className="fas fa-save"></i>
-            Save Changes
+            <i className={isSaving ? 'fas fa-spinner fa-spin' : 'fas fa-save'}></i>
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>

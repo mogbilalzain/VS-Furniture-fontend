@@ -17,6 +17,8 @@ export default function ProductImagesManager({ productId, onClose }) {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
@@ -78,62 +80,65 @@ export default function ProductImagesManager({ productId, onClose }) {
   const uploadImages = async () => {
     if (selectedFiles.length === 0) return;
 
+    setUploadError('');
+    setUploadSuccess('');
+
     try {
       setUploading(true);
-      
-      // Debug logging
-      console.log('🔧 ProductImagesManager - Starting upload');
-      console.log('🔧 Product ID:', productId);
-      console.log('🔧 Selected files:', selectedFiles.length);
-      
-      // Check authentication
-      const token = localStorage.getItem('auth_token');
-      console.log('🔧 Auth token exists:', !!token);
-      console.log('🔧 Auth token preview:', token ? token.substring(0, 20) + '...' : 'none');
-      
+
       const formData = new FormData();
-      
       selectedFiles.forEach((file, index) => {
         formData.append('images[]', file);
         formData.append(`alt_texts[${index}]`, `Product image ${index + 1}`);
         formData.append(`titles[${index}]`, `Product image ${index + 1}`);
-        console.log(`🔧 Added file ${index + 1}: ${file.name} (${file.size} bytes)`);
       });
 
-      // Set first image as primary if no images exist
       if (images.length === 0) {
-        formData.append('is_primary', '1'); // Send as string '1' for better compatibility
-        console.log('🔧 Set first image as primary');
+        formData.append('is_primary', '1');
       }
 
-      console.log('🔧 About to call API...');
-      console.log('🔧 API endpoint will be: /admin/products/' + productId + '/images');
-      console.log('🔧 FormData entries:');
-      for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}:`, value instanceof File ? `File(${value.name}, ${value.size} bytes)` : value);
-      }
-      
       const response = await productImagesAPI.admin.uploadImages(productId, formData);
-      
-      console.log('🔧 API Response received:', response);
-      
+
       if (response.success) {
-        console.log('🔧 Upload successful:', response.data);
         setSelectedFiles([]);
+
+        // Optimistic update: أضف الصور الجديدة فوراً من الاستجابة مع cache-buster
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          const newImages = response.data.map(img => ({
+            ...img,
+            // cache-buster لتجبر المتصفح على إعادة تحميل الصورة الجديدة
+            image_url: img.image_url
+              ? `${img.image_url}${img.image_url.includes('?') ? '&' : '?'}v=${img.id || Date.now()}`
+              : img.image_url,
+          }));
+          setImages(prev => [...prev, ...newImages]);
+        }
+
+        // ثم زامن مع الخادم للحصول على القائمة الكاملة الدقيقة
         fetchImages();
-        alert(`${response.data.length} images uploaded successfully!`);
+
+        // رسالة نجاح أو نجاح جزئي
+        if (response.errors && response.errors.length > 0) {
+          const errNames = response.errors.map(e => e.filename).join(', ');
+          setUploadError(`تم رفع بعض الصور فقط. فشل: ${errNames}`);
+          setUploadSuccess(`تم رفع ${response.data.length} صور بنجاح.`);
+        } else {
+          setUploadSuccess(`تم رفع ${response.data.length} صور بنجاح.`);
+        }
       } else {
-        console.error('🔧 Upload failed:', response);
-        alert('Upload failed: ' + (response.message || 'Unknown error'));
+        // الخادم أرجع success: false — اعرض الخطأ الفعلي
+        const errDetails = response.errors?.length
+          ? response.errors.map(e => `${e.filename}: ${e.error}`).join('\n')
+          : '';
+        setUploadError(
+          (response.message || 'فشل الرفع') +
+          (errDetails ? `\n${errDetails}` : '') +
+          '\n\nتحقق من: docker compose logs laravel-fpm | grep "upload failed"'
+        );
       }
     } catch (error) {
-      console.error('🔧 Upload error caught:', error);
-      console.error('🔧 Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
-      alert('Error uploading images: ' + error.message);
+      console.error('Upload error:', error);
+      setUploadError('خطأ في الاتصال بالخادم: ' + error.message);
     } finally {
       setUploading(false);
     }
@@ -206,6 +211,20 @@ export default function ProductImagesManager({ productId, onClose }) {
           {/* Upload Section */}
           <div className="mb-8">
             <h3 className="text-lg font-medium mb-4">Upload New Images</h3>
+
+            {/* رسائل النجاح / الخطأ */}
+            {uploadSuccess && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded-lg text-sm whitespace-pre-line">
+                {uploadSuccess}
+                <button onClick={() => setUploadSuccess('')} className="float-right text-green-600 hover:text-green-900">✕</button>
+              </div>
+            )}
+            {uploadError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm whitespace-pre-line">
+                {uploadError}
+                <button onClick={() => setUploadError('')} className="float-right text-red-600 hover:text-red-900">✕</button>
+              </div>
+            )}
             
             {/* Drag & Drop Area */}
             <div
