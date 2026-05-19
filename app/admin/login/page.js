@@ -276,18 +276,8 @@ const AdminLogin = () => {
               </button>
             </div>
 
-            {/* Demo credentials and back link */}
+            {/* Back link */}
             <div className="text-center space-y-3">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-800 font-medium mb-1">Demo Credentials:</p>
-                <p className="text-xs text-blue-600">
-                  Email: <span className="font-mono">admin@vsfurniture.com</span>
-                </p>
-                <p className="text-xs text-blue-600">
-                  Password: <span className="font-mono">password</span>
-                </p>
-              </div>
-              
               <button
                 type="button"
                 onClick={() => router.push('/')}
