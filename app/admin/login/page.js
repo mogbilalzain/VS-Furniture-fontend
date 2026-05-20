@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth-context';
 import { authStorage, adminRedirect } from '../../../lib/localStorage-utils';
@@ -8,24 +9,22 @@ import { authStorage, adminRedirect } from '../../../lib/localStorage-utils';
 const AdminLogin = () => {
   const router = useRouter();
   const { login, user, isAuthenticated, isAdmin, loading, error, initialized } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
-  // Clear login error when form data changes
   useEffect(() => {
     if (loginError) {
       setLoginError('');
     }
   }, [formData.email, formData.password]);
 
-  // Check authentication once when component mounts
   useEffect(() => {
     if (!initialized) {
       return;
@@ -33,13 +32,11 @@ const AdminLogin = () => {
 
     if (!hasCheckedAuth) {
       setHasCheckedAuth(true);
-      
-      // Debug: Log current auth state
+
       console.log('🔍 Login page - Auth state check');
       console.log('🔍 React state user:', user);
       console.log('🔍 localStorage debug:', authStorage.getDebugInfo());
-      
-      // Check if user is already authenticated admin (from localStorage or React state)
+
       if (authStorage.isAuthenticatedAdmin() || (user && user.role === 'admin')) {
         console.log('✅ User already authenticated as admin, redirecting...');
         window.location.href = '/admin/categories';
@@ -50,27 +47,24 @@ const AdminLogin = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Prevent double submission
+
     if (loginLoading) {
       return;
     }
 
-    // Basic validation
     if (!formData.email.trim() || !formData.password.trim()) {
       setLoginError('Please enter both email and password');
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setLoginError('Please enter a valid email address');
@@ -82,26 +76,30 @@ const AdminLogin = () => {
 
     try {
       console.log('🔐 Attempting admin login with email:', formData.email);
-      
+
       const result = await login({
-        username: formData.email, // Send email as username to backend
-        password: formData.password
+        username: formData.email,
+        password: formData.password,
       });
-      
+
       console.log('📥 Login result:', result);
-      
+
       if (result && result.success) {
         console.log('✅ Login successful, redirecting...');
-        
-        // Verify token is saved before redirect
+
         const savedToken = localStorage.getItem('auth_token');
-        console.log('🔍 Token before redirect:', savedToken ? savedToken.substring(0, 30) + '...' : 'null');
+        console.log(
+          '🔍 Token before redirect:',
+          savedToken ? savedToken.substring(0, 30) + '...' : 'null'
+        );
         console.log('🔍 Redirect timestamp:', new Date().toISOString());
-        
-        // Add small delay to ensure token is fully saved, then use router navigation
+
         setTimeout(() => {
           const finalToken = localStorage.getItem('auth_token');
-          console.log('🔍 Final token check before redirect:', finalToken ? finalToken.substring(0, 30) + '...' : 'null');
+          console.log(
+            '🔍 Final token check before redirect:',
+            finalToken ? finalToken.substring(0, 30) + '...' : 'null'
+          );
           window.location.href = '/admin/categories';
         }, 200);
         return;
@@ -113,85 +111,97 @@ const AdminLogin = () => {
     } catch (err) {
       console.error('❌ Login error:', err);
       setLoginError(
-        err?.response?.data?.message || 
-        err.message || 
-        'Login failed. Please check your connection and try again.'
+        err?.response?.data?.message ||
+          err.message ||
+          'Login failed. Please check your connection and try again.'
       );
     } finally {
       setLoginLoading(false);
     }
   };
 
-  // Show loading while auth context is initializing
   if (!initialized || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Initializing...</p>
-        </div>
+      <div className="min-h-screen bg-surface flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 rounded-full border-4 border-surface-container border-t-primary-container animate-spin" />
+        <p className="text-on-surface-variant text-[14px] font-medium">Initializing…</p>
       </div>
     );
   }
 
-  // Don't render login form if user is already authenticated
   if (initialized && (authStorage.isAuthenticatedAdmin() || (user && user.role === 'admin'))) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Redirecting to admin panel...</p>
-        </div>
+      <div className="min-h-screen bg-surface flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 rounded-full border-4 border-surface-container border-t-primary-container animate-spin" />
+        <p className="text-on-surface-variant text-[14px] font-medium">
+          Redirecting to admin panel…
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center mb-6">
-            <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+    <main className="min-h-screen bg-surface relative overflow-hidden flex items-center justify-center px-margin-mobile md:px-margin-desktop py-12">
+      {/* Atmospheric orbs */}
+      <div
+        aria-hidden
+        className="absolute top-[-10%] right-[-10%] w-[480px] h-[480px] rounded-full bg-primary-container/20 blur-[120px] pointer-events-none"
+      />
+      <div
+        aria-hidden
+        className="absolute bottom-[-10%] left-[-10%] w-[520px] h-[520px] rounded-full bg-on-surface/[0.04] blur-[140px] pointer-events-none"
+      />
+
+      <section className="relative z-10 w-full max-w-[460px]">
+        {/* Brand header */}
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="w-14 h-14 rounded-2xl bg-on-surface flex items-center justify-center mb-4 admin-shadow-soft">
+            <Image
+              src="/vs-logo.svg"
+              alt="VS Furniture"
+              width={36}
+              height={36}
+              className="brightness-0 invert"
+              priority
+            />
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-900">
-            Admin Panel
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Sign in with your email to access the admin dashboard
+          <h1 className="text-[24px] font-bold tracking-tight text-on-surface">VS Furniture</h1>
+          <p className="text-on-surface-variant text-[13px] mt-1 tracking-wide uppercase">
+            Admin Portal
           </p>
         </div>
-        
-        {/* Login Form */}
-        <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
-          <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-            {/* Error Message */}
+
+        {/* Card */}
+        <div className="bg-surface-container-lowest rounded-[20px] border border-surface-container admin-shadow-soft p-8 sm:p-10">
+          <header className="mb-8">
+            <h2 className="text-[28px] sm:text-[32px] font-bold tracking-tight text-on-surface leading-tight">
+              Welcome back
+            </h2>
+            <p className="text-on-surface-variant mt-2 text-[15px] leading-relaxed">
+              Please enter your credentials to access your workspace.
+            </p>
+          </header>
+
+          <form className="space-y-5" onSubmit={handleSubmit} noValidate>
             {(loginError || error) && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 animate-pulse">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                  <div className="text-red-800 text-sm font-medium">
-                    {loginError || error}
-                  </div>
-                </div>
+              <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-error-container border border-error/30 text-on-error-container">
+                <span className="material-symbols-outlined mt-0.5 text-[20px]">error</span>
+                <p className="text-[13px] font-medium leading-relaxed">{loginError || error}</p>
               </div>
             )}
-            
-            {/* Email Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+
+            {/* Email */}
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="text-[14px] font-medium text-on-surface-variant tracking-[0.01em] block"
+              >
+                Work Email
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                </div>
+              <div className="relative group">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 group-focus-within:text-on-surface transition-colors text-[22px] pointer-events-none">
+                  mail
+                </span>
                 <input
                   id="email"
                   name="email"
@@ -201,96 +211,114 @@ const AdminLogin = () => {
                   disabled={loginLoading}
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all duration-200 sm:text-sm"
-                  placeholder="admin@vsfurniture.com"
+                  placeholder="name@company.com"
+                  className="w-full pl-12 pr-4 py-4 bg-surface-container-lowest border border-surface-container rounded-[20px] outline-none focus:border-on-surface focus:ring-0 text-on-surface placeholder:text-on-surface-variant/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
-            
-            {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+
+            {/* Password */}
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="text-[14px] font-medium text-on-surface-variant tracking-[0.01em] block"
+              >
                 Password
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
+              <div className="relative group">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 group-focus-within:text-on-surface transition-colors text-[22px] pointer-events-none">
+                  lock
+                </span>
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   required
                   autoComplete="current-password"
                   disabled={loginLoading}
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all duration-200 sm:text-sm"
-                  placeholder="Enter your password"
+                  placeholder="••••••••"
+                  className="w-full pl-12 pr-12 py-4 bg-surface-container-lowest border border-surface-container rounded-[20px] outline-none focus:border-on-surface focus:ring-0 text-on-surface placeholder:text-on-surface-variant/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loginLoading}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/40 hover:text-on-surface transition-colors disabled:cursor-not-allowed"
                 >
-                  {showPassword ? (
-                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
+                  <span className="material-symbols-outlined text-[22px]">
+                    {showPassword ? 'visibility_off' : 'visibility'}
+                  </span>
                 </button>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div>
-              <button
-                type="submit"
-                disabled={loginLoading || !formData.email.trim() || !formData.password.trim()}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {loginLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                    </svg>
-                    Sign in to Admin Panel
-                  </>
-                )}
-              </button>
-            </div>
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loginLoading || !formData.email.trim() || !formData.password.trim()}
+              className="w-full bg-primary-container text-on-primary-fixed font-bold py-4 rounded-[20px] hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none mt-2"
+            >
+              {loginLoading ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin text-[22px]">
+                    progress_activity
+                  </span>
+                  <span>Authenticating…</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <span className="material-symbols-outlined text-[22px]">arrow_forward</span>
+                </>
+              )}
+            </button>
 
             {/* Back link */}
-            <div className="text-center space-y-3">
+            <div className="text-center pt-2">
               <button
                 type="button"
                 onClick={() => router.push('/')}
                 disabled={loginLoading}
-                className="text-sm text-blue-600 hover:text-blue-500 disabled:opacity-50 transition-colors font-medium"
+                className="inline-flex items-center gap-1.5 text-[13px] text-on-surface-variant hover:text-on-surface transition-colors font-medium disabled:opacity-50"
               >
-                ← Back to Home
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back to Home
               </button>
             </div>
           </form>
+
+          {/* Divider */}
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-surface-container" />
+            </div>
+          </div>
+
+          {/* Footer links */}
+          <footer className="text-center text-[12px] font-semibold text-on-surface-variant/40 flex items-center justify-center gap-3 flex-wrap">
+            <a href="#" className="hover:text-on-surface transition-colors">
+              Privacy Policy
+            </a>
+            <span>•</span>
+            <a href="#" className="hover:text-on-surface transition-colors">
+              Terms of Service
+            </a>
+            <span>•</span>
+            <a href="#" className="hover:text-on-surface transition-colors">
+              System Status
+            </a>
+          </footer>
         </div>
-      </div>
-    </div>
+
+        {/* Copyright */}
+        <p className="text-center text-[12px] text-on-surface-variant/50 mt-6">
+          © {new Date().getFullYear()} VS Furniture. Enterprise Admin Panel.
+        </p>
+      </section>
+    </main>
   );
 };
 

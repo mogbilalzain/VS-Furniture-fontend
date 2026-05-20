@@ -1,650 +1,250 @@
 'use client'
 
-import { Inter } from 'next/font/google'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { authStorage } from '../../lib/localStorage-utils'
 import NotificationsBell from '../../components/NotificationsBell'
 import './admin.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const NAV_SECTIONS = [
+  {
+    title: 'Main',
+    items: [
+      { href: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
+      { href: '/admin/products', label: 'Products', icon: 'inventory_2' },
+      { href: '/admin/categories', label: 'Categories', icon: 'category' },
+      { href: '/admin/import-products', label: 'Import Products', icon: 'file_upload' },
+    ],
+  },
+  {
+    title: 'Content',
+    items: [
+      { href: '/admin/contact-messages', label: 'Contact Messages', icon: 'mail', matchPrefix: true },
+      { href: '/admin/certifications', label: 'Certifications', icon: 'workspace_premium' },
+      { href: '/admin/solutions', label: 'Solutions', icon: 'lightbulb' },
+      { href: '/admin/homepage-content', label: 'Content', icon: 'web' },
+    ],
+  },
+  {
+    title: 'Configuration',
+    items: [
+      { href: '/admin/properties', label: 'Properties', icon: 'tune' },
+      { href: '/admin/property-values', label: 'Property Values', icon: 'list_alt' },
+      { href: '/admin/product-files', label: 'Product Files', icon: 'description' },
+      { href: '/admin/materials/categories', label: 'Materials', icon: 'palette', matchPrefix: '/admin/materials' },
+      { href: '/admin/settings', label: 'Settings', icon: 'settings' },
+    ],
+  },
+]
+
+function isItemActive(item, pathname) {
+  if (item.matchPrefix === true) return pathname.startsWith(item.href)
+  if (typeof item.matchPrefix === 'string') return pathname.startsWith(item.matchPrefix)
+  return pathname === item.href
+}
 
 export default function AdminLayout({ children }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [sidebarHidden, setSidebarHidden] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in (except for login page)
     if (pathname !== '/admin/login') {
-      console.log('🔍 Admin Layout - Checking authentication for:', pathname);
-      
       if (!authStorage.isAuthenticatedAdmin()) {
-        console.log('❌ Admin Layout - Not authenticated admin, redirecting to login...');
-        console.log('🔍 Debug info:', authStorage.getDebugInfo());
-        router.replace('/admin/login');
-        return;
+        router.replace('/admin/login')
+        return
       }
-      
-      console.log('✅ Admin Layout - User is authenticated admin');
     }
     setIsLoading(false)
   }, [router, pathname])
 
-  const toggleSidebar = () => {
-    setSidebarHidden(!sidebarHidden)
-  }
+  useEffect(() => {
+    setSidebarOpen(false)
+  }, [pathname])
 
   const logout = () => {
-    console.log('🚪 Admin Layout - Logging out...');
-    authStorage.clearAuth();
-    router.replace('/admin/login');
+    authStorage.clearAuth()
+    router.replace('/admin/login')
   }
 
-  // Show loading state to prevent hydration mismatch
   if (isLoading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontFamily: "'Quasimoda', 'Inter', sans-serif"
-      }}>
-        <div style={{
-          fontSize: '1.125rem',
-          color: '#6b7280'
-        }}>
-          Loading...
+      <div className="admin-shell flex justify-center items-center min-h-screen bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full border-4 border-surface-container border-t-primary-container animate-spin" />
+          <p className="text-on-surface-variant text-body-md">Loading admin panel…</p>
         </div>
       </div>
     )
   }
 
-  // If it's the login page, don't show the layout
   if (pathname === '/admin/login') {
     return <>{children}</>
   }
 
   return (
-    <div className="admin-panel" style={{ fontFamily: "'Quasimoda', 'Inter', sans-serif", backgroundColor: '#f5f5f5' }}>
-      {/* Mobile Menu Button */}
+    <div className="admin-shell min-h-screen bg-background text-on-background antialiased">
+      {/* Mobile menu button */}
       <button
-        onClick={toggleSidebar}
-        style={{
-          display: 'none',
-          position: 'fixed',
-          top: '1rem',
-          left: '1rem',
-          zIndex: 1100,
-          background: '#FFD700',
-          color: '#2c2c2c',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '0.75rem',
-          cursor: 'pointer'
-        }}
+        type="button"
+        onClick={() => setSidebarOpen((v) => !v)}
+        aria-label="Toggle sidebar"
+        className="lg:hidden fixed top-4 left-4 z-[60] w-11 h-11 rounded-xl bg-[#0F0F10] text-primary-container flex items-center justify-center admin-shadow-md"
       >
-        <i className="fas fa-bars"></i>
+        <span className="material-symbols-outlined text-[22px]">
+          {sidebarOpen ? 'close' : 'menu'}
+        </span>
       </button>
 
-      {/* Sidebar */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #3d5c4d 0%, #2c2c2c 100%)',
-          height: '100vh',
-          position: 'fixed',
-          left: 0,
-          top: 0,
-          width: '250px',
-          zIndex: 1000,
-          transition: 'transform 0.3s ease',
-          transform: sidebarHidden ? 'translateX(-100%)' : 'translateX(0)',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        {/* Sidebar Header - Fixed */}
-        <div style={{ 
-          padding: '1.5rem', 
-          borderBottom: '1px solid #4a5568',
-          flexShrink: 0
-        }}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FFD700' }}>
-            V/S
-          </div>
-          <div style={{ fontSize: '0.875rem', color: '#cbd5e1' }}>Admin Dashboard</div>
-        </div>
-        
-        {/* Sidebar Navigation - Scrollable */}
-        <nav 
-          className="admin-sidebar-nav"
-          style={{ 
-            marginTop: '1.5rem',
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            paddingBottom: '2rem'
-          }}>
-          <Link href="/admin/dashboard" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/dashboard' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/dashboard' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/dashboard') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/dashboard') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-home" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Dashboard
-          </Link>
-          
-          <Link href="/admin/products" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/products' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/products' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/products') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/products') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-box" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Products
-          </Link>
-          
-          <Link href="/admin/import-products" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/import-products' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/import-products' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/import-products') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/import-products') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-file-import" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Import Products
-          </Link>
-          
-          <Link href="/admin/contact-messages" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname.startsWith('/admin/contact-messages') ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname.startsWith('/admin/contact-messages') ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (!pathname.startsWith('/admin/contact-messages')) {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!pathname.startsWith('/admin/contact-messages')) {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-envelope" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Contact Messages
-          </Link>
-          
-          <Link href="/admin/certifications" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/certifications' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/certifications' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/certifications') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/certifications') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-certificate" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Certifications
-          </Link>
-          
-          <Link href="/admin/solutions" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/solutions' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/solutions' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/solutions') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/solutions') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-lightbulb" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Solutions
-          </Link>
-          
-          {/* <Link href="/admin/orders" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/orders' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/orders' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/orders') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/orders') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-shopping-cart" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Orders
-          </Link> */}
-          
-          <Link href="/admin/categories" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/categories' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/categories' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/categories') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/categories') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-tags" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Categories
-          </Link>
-          
-          <Link href="/admin/homepage-content" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/homepage-content' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/homepage-content' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/homepage-content') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/homepage-content') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-home" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Content Management
-          </Link>
-          
-          <Link href="/admin/properties" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/properties' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/properties' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/properties') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/properties') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-cogs" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Properties
-          </Link>
-          
-          <Link href="/admin/property-values" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/property-values' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/property-values' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/property-values') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/property-values') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-list" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Property Values
-          </Link>
-          
-          <Link href="/admin/product-files" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/product-files' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/product-files' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/product-files') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/product-files') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-file-pdf" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Product Files
-          </Link>
-          
-          
-          <Link href="/admin/materials/categories" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname.startsWith('/admin/materials') ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname.startsWith('/admin/materials') ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (!pathname.startsWith('/admin/materials')) {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!pathname.startsWith('/admin/materials')) {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-palette" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Materials
-          </Link>
-          
-          <Link href="/admin/reports" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/reports' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/reports' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/reports') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/reports') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-chart-bar" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Reports
-          </Link>
-          
-          <Link href="/admin/settings" style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            color: pathname === '/admin/settings' ? '#FFD700' : '#cbd5e1',
-            textDecoration: 'none',
-            transition: 'all 0.3s ease',
-            borderRadius: '8px',
-            margin: '0.25rem 0.5rem',
-            backgroundColor: pathname === '/admin/settings' ? 'rgba(255, 215, 0, 0.1)' : 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            if (pathname !== '/admin/settings') {
-              e.target.style.backgroundColor = 'rgba(255, 215, 0, 0.1)'
-              e.target.style.color = '#FFD700'
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (pathname !== '/admin/settings') {
-              e.target.style.backgroundColor = 'transparent'
-              e.target.style.color = '#cbd5e1'
-            }
-          }}>
-            <i className="fas fa-cog" style={{ width: '20px', marginRight: '0.75rem' }}></i>
-            Settings
-          </Link>
-         
-        </nav>
-      </div>
+      {/* Overlay on mobile */}
+      {sidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      {/* Main Content */}
-      <div
-        style={{
-          marginLeft: sidebarHidden ? '0' : '250px',
-          transition: 'margin-left 0.3s ease',
-          minHeight: '100vh'
-        }}
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 h-full w-[260px] bg-[#0F0F10] flex flex-col py-7 z-50 transition-transform duration-300 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
       >
-        {/* Header */}
-        <header style={{
-          background: 'white',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-          borderBottom: '1px solid #e5e7eb',
-          padding: '1.5rem'
-        }}>
-          <div style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <div>
-              <h1 style={{
-                fontSize: '1.875rem',
-                fontWeight: 700,
-                color: '#111827',
-                margin: 0
-              }}>Admin Dashboard</h1>
-              <p style={{
-                color: '#6b7280',
-                margin: '0.25rem 0 0 0'
-              }}>Welcome back, Admin</p>
+        <Link href="/admin/dashboard" className="px-7 mb-8 group block">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center">
+              <span className="text-[#0F0F10] font-black text-lg tracking-tight">
+                <Image src="/vs-logo.svg" alt="VS Furniture" width={50} height={50} />
+              </span>
             </div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem'
-            }}>
-              {/* Notifications Bell */}
-              <NotificationsBell />
-              
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <div 
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    backgroundColor: '#f3f4f6',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '2px solid #e5e7eb',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#FFD700'
-                    e.target.style.borderColor = '#FFD700'
-                    e.target.querySelector('svg').style.fill = '#ffffff'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = '#f3f4f6'
-                    e.target.style.borderColor = '#e5e7eb'
-                    e.target.querySelector('svg').style.fill = '#6b7280'
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#6b7280" viewBox="0 0 256 256" style={{ transition: 'fill 0.3s ease' }}>
-                    <path d="M229.19,213c-15.81-27.32-40.63-46.49-69.47-54.62a70,70,0,1,0-63.44,0C67.44,166.5,42.62,185.67,26.81,213a6,6,0,1,0,10.38,6C56.4,185.81,90.34,166,128,166s71.6,19.81,90.81,53a6,6,0,1,0,10.38-6ZM70,96a58,58,0,1,1,58,58A58.07,58.07,0,0,1,70,96Z"></path>
-                  </svg>
-                </div>
-                <span style={{
-                  color: '#374151',
-                  fontWeight: 500
-                }}>Admin</span>
+            <div>
+              {/* <p className="text-white font-bold text-[15px] tracking-tight leading-none">
+                VS Furniture
+              </p> */}
+              <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.22em] mt-1.5">
+                Enterprise Admin
+              </p>
+            </div>
+          </div>
+        </Link>
+
+        <nav className="flex-1 overflow-y-auto admin-scrollbar px-3 pb-4 space-y-6">
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.title}>
+              <p className="px-4 mb-2 text-white/25 text-[10px] font-bold uppercase tracking-[0.2em]">
+                {section.title}
+              </p>
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const active = isItemActive(item, pathname)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`relative flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${
+                        active
+                          ? 'text-primary-container font-semibold bg-white/[0.06]'
+                          : 'text-white/55 font-medium hover:text-white hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      {active && (
+                        <span className="absolute left-[-12px] top-1/2 -translate-y-1/2 h-5 w-[3px] bg-primary-container rounded-r-full" />
+                      )}
+                      <span
+                        className="material-symbols-outlined text-[20px]"
+                        style={active ? { fontVariationSettings: "'FILL' 1" } : { opacity: 0.9 }}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className="text-[14px] tracking-tight">{item.label}</span>
+                    </Link>
+                  )
+                })}
               </div>
-              <button 
-                onClick={logout}
-                style={{
-                  color: '#6b7280',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'color 0.3s ease'
-                }}
-                onMouseEnter={(e) => e.target.style.color = '#ef4444'}
-                onMouseLeave={(e) => e.target.style.color = '#6b7280'}
-                title="Logout"
-              >
-                <i className="fas fa-sign-out-alt"></i>
-              </button>
+            </div>
+          ))}
+        </nav>
+
+        <div className="mx-5 my-3 h-px bg-white/[0.06]" />
+        <div className="px-5 space-y-2">
+          {/* <button
+            type="button"
+            className="w-full bg-white/[0.04] border border-white/10 text-white/80 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-white/[0.08] hover:text-white hover:border-white/15 active:scale-[0.98] transition-all"
+          >
+            <span className="material-symbols-outlined text-[18px]">help_outline</span>
+            <span className="text-[14px]">Support</span>
+          </button> */}
+          <button
+            type="button"
+            onClick={logout}
+            className="w-full bg-white/[0.04] border border-white/10 text-white/80 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-white/[0.08] hover:text-error transition-colors hover:border-error/15 active:scale-[0.98] transition-all hover:text-error transition-colors hover:cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[16px]">logout</span>
+            <span>Sign out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="lg:ml-[260px] min-h-screen flex flex-col">
+        {/* Top bar */}
+        <header className="admin-glass-header sticky top-0 w-full z-40 h-16 px-4 sm:px-6 lg:px-margin-desktop flex items-center justify-between border-b border-outline-variant/30">
+          <div className="flex items-center gap-3 flex-1 max-w-md ml-12 lg:ml-0">
+            <div className="relative w-full">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 text-[20px]">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Search…"
+                className="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant/30 rounded-full text-[14px] focus:outline-none focus:ring-2 focus:ring-primary-container/50 focus:border-primary-container transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center">
+              <NotificationsBell />
+            </div>
+            <button
+              type="button"
+              className="hidden sm:flex w-10 h-10 rounded-full items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors"
+              aria-label="Help"
+            >
+              <span className="material-symbols-outlined text-[22px]">help_outline</span>
+            </button>
+            <div className="hidden sm:block h-8 w-px bg-outline-variant/30 mx-1" />
+            <div className="flex items-center gap-3">
+              <div className="text-right hidden sm:block">
+                <p className="text-[13px] font-bold text-on-surface leading-none">Admin</p>
+                <p className="text-[10px] text-on-surface-variant/60 font-medium uppercase tracking-wider mt-0.5">
+                  Administrator
+                </p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-[#0F0F10] flex items-center justify-center border-2 border-primary-container">
+                <span className="text-primary-container font-bold text-[13px]">VS</span>
+              </div>
             </div>
           </div>
         </header>
 
-        {/* Page Content */}
-        <main style={{
-          padding: '1.5rem',
-          maxWidth: '1200px',
-          margin: '0 auto'
-        }}>
+        {/* Page content */}
+        <div className="flex-1 px-4 sm:px-6 lg:px-margin-desktop py-6 lg:py-10 max-w-[1440px] w-full mx-auto">
           {children}
-        </main>
-      </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-auto px-4 sm:px-6 lg:px-margin-desktop py-6 border-t border-outline-variant/30 text-on-surface-variant/60 text-[12px] flex flex-col sm:flex-row justify-between items-center gap-3">
+          <p>© {new Date().getFullYear()} VS Furniture. Enterprise Admin Panel.</p>
+          <div className="flex gap-5">
+            <span className="hover:text-on-surface transition-colors cursor-default">v1.0</span>
+            <span className="hover:text-on-surface transition-colors cursor-default">Status: Operational</span>
+          </div>
+        </footer>
+      </main>
     </div>
   )
-} 
+}

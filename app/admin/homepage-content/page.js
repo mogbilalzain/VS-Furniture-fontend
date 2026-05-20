@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../../lib/api';
+import { PageHeader, AdminButton } from '../../../components/admin/ui';
 
 const HomepageContentManager = () => {
   const [loading, setLoading] = useState(false);
@@ -202,16 +203,16 @@ const HomepageContentManager = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Homepage Content Management</h1>
-        <button
-          onClick={openAddModal}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Add New Content
-        </button>
-      </div>
+    <div className="admin-legacy space-y-6">
+      <PageHeader
+        title="Homepage Content"
+        description="Manage videos, images and links for homepage sections."
+        actions={
+          <AdminButton variant="primary" size="lg" icon="add" onClick={openAddModal}>
+            Add New Content
+          </AdminButton>
+        }
+      />
 
       {/* Section Filter */}
       <div className="mb-6">

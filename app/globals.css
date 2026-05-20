@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import "tailwindcss";
 
 /* Quasimoda Font Face */
@@ -26,7 +27,68 @@
   --color-vs-darker-gray: #2c2c2c;
   --color-vs-yellow: #fbe50f;
   --color-vs-green: #3d5c4d;
-  
+
+  /* Premium Minimal SaaS Admin Design Tokens */
+  --color-primary: #705d00;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #ffd600;
+  --color-on-primary-container: #705d00;
+  --color-on-primary-fixed: #221b00;
+  --color-on-primary-fixed-variant: #544600;
+  --color-primary-fixed: #ffe170;
+  --color-primary-fixed-dim: #e9c400;
+  --color-inverse-primary: #e9c400;
+
+  --color-secondary: #5f5e5e;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #e5e2e1;
+  --color-on-secondary-container: #656464;
+  --color-secondary-fixed: #e5e2e1;
+  --color-secondary-fixed-dim: #c8c6c5;
+  --color-on-secondary-fixed: #1c1b1b;
+  --color-on-secondary-fixed-variant: #474646;
+
+  --color-tertiary: #5d5f5f;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #d9d9d9;
+  --color-on-tertiary-container: #5d5f5f;
+  --color-tertiary-fixed: #e2e2e2;
+  --color-tertiary-fixed-dim: #c6c6c7;
+  --color-on-tertiary-fixed: #1a1c1c;
+  --color-on-tertiary-fixed-variant: #454747;
+
+  --color-surface: #f9f9f9;
+  --color-surface-dim: #dadada;
+  --color-surface-bright: #f9f9f9;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f4f3f3;
+  --color-surface-container: #eeeeee;
+  --color-surface-container-high: #e8e8e8;
+  --color-surface-container-highest: #e2e2e2;
+  --color-surface-variant: #e2e2e2;
+  --color-surface-tint: #705d00;
+  --color-inverse-surface: #2f3131;
+  --color-inverse-on-surface: #f1f1f1;
+
+  --color-on-surface: #1a1c1c;
+  --color-on-surface-variant: #4d4632;
+  --color-on-background: #1a1c1c;
+  --color-background: #f9f9f9;
+
+  --color-outline: #7f775f;
+  --color-outline-variant: #d0c6ab;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Admin spacing tokens */
+  --spacing-gutter: 24px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 40px;
+  --spacing-container-max: 1440px;
+
   /* Font families */
   --font-quasimoda: 'Quasimoda', 'Inter', sans-serif;
   --font-inter: 'Inter', sans-serif;
@@ -832,3 +894,283 @@ i[class*="fa"],
     height: 150px !important;
   }
 }
+
+/* ============================================================
+   Premium Minimal SaaS Admin — Utility Classes
+   ============================================================ */
+
+.admin-shell {
+  font-family: 'Inter', 'Quasimoda', sans-serif;
+  background: var(--color-background);
+  color: var(--color-on-background);
+}
+
+.admin-shell * {
+  font-family: 'Inter', 'Quasimoda', sans-serif;
+}
+
+.admin-shell .material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  user-select: none;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined' !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  user-select: none;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* Glass header used in admin topbar */
+.admin-glass-header {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Soft ambient shadow used on cards */
+.admin-shadow-soft {
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.admin-shadow-md {
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Sidebar item active accent */
+.admin-sidebar-active {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffd600;
+}
+
+/* Custom scrollbar for sidebar */
+.admin-scrollbar::-webkit-scrollbar { width: 4px; }
+.admin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+/* Display/headline type scale used by admin pages */
+.admin-shell .text-display-lg {
+  font-size: 48px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+.admin-shell .text-headline-lg {
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+.admin-shell .text-headline-md {
+  font-size: 24px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+.admin-shell .text-body-lg {
+  font-size: 18px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+.admin-shell .text-body-md {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+.admin-shell .text-label-md {
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  font-weight: 500;
+}
+.admin-shell .text-label-sm {
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .admin-shell .text-display-lg { font-size: 32px; }
+  .admin-shell .text-headline-lg { font-size: 24px; }
+}
+
+/* Chart gradient overlay used on dashboard line chart */
+.admin-chart-gradient {
+  background: linear-gradient(180deg, rgba(255, 214, 0, 0.1) 0%, rgba(255, 214, 0, 0) 100%);
+}
+
+/* Subtle border helper */
+.admin-border-soft {
+  border-color: rgba(208, 198, 171, 0.3);
+}
+
+/* Animation: fade-up for admin cards */
+@keyframes adminFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.admin-animate-in {
+  animation: adminFadeUp 0.35s ease-out both;
+}
+
+/* ============================================================
+   Legacy admin page auto-skin
+   Wrap a legacy page in `.admin-legacy` to get the new look
+   without rewriting markup. It re-skins common patterns:
+   white cards, default tables, default buttons, inputs.
+   ============================================================ */
+
+.admin-legacy {
+  color: var(--color-on-surface);
+}
+
+.admin-legacy h1,
+.admin-legacy h2 {
+  letter-spacing: -0.01em;
+  color: var(--color-on-surface);
+}
+
+.admin-legacy .bg-white {
+  background: var(--color-surface-container-lowest) !important;
+  border-radius: 1rem;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(208, 198, 171, 0.18);
+}
+
+.admin-legacy .bg-gray-50,
+.admin-legacy .bg-gray-100 {
+  background: var(--color-surface-container-low) !important;
+}
+
+.admin-legacy table { border-collapse: separate; border-spacing: 0; }
+
+.admin-legacy thead.bg-gray-50,
+.admin-legacy thead.bg-gray-100 {
+  background: transparent !important;
+}
+
+.admin-legacy thead th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(77, 70, 50, 0.7);
+  border-bottom: 1px solid var(--color-surface-container);
+}
+
+.admin-legacy tbody tr {
+  transition: background-color 0.15s ease;
+}
+.admin-legacy tbody tr:hover {
+  background-color: rgba(244, 243, 243, 0.5);
+}
+.admin-legacy tbody td {
+  border-top: 1px solid var(--color-surface-container);
+}
+
+/* Re-skin default Tailwind utility buttons in legacy pages.
+   Only when not already styled with admin-btn-* */
+.admin-legacy button.bg-blue-600,
+.admin-legacy button.bg-blue-500,
+.admin-legacy .bg-blue-600.text-white,
+.admin-legacy .bg-blue-500.text-white,
+.admin-legacy .bg-yellow-400,
+.admin-legacy .bg-yellow-500 {
+  background: var(--color-on-surface) !important;
+  color: var(--color-surface) !important;
+  border-radius: 0.75rem !important;
+  font-weight: 700 !important;
+  transition: opacity 0.15s ease;
+}
+.admin-legacy button.bg-blue-600:hover,
+.admin-legacy button.bg-blue-500:hover,
+.admin-legacy .bg-yellow-400:hover,
+.admin-legacy .bg-yellow-500:hover {
+  background: rgba(26, 28, 28, 0.85) !important;
+}
+
+.admin-legacy button.bg-red-500,
+.admin-legacy button.bg-red-600 {
+  background: var(--color-error) !important;
+  color: var(--color-on-error) !important;
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+}
+
+.admin-legacy button.bg-green-500,
+.admin-legacy button.bg-green-600 {
+  background: #2e7d32 !important;
+  color: #ffffff !important;
+  border-radius: 0.75rem !important;
+}
+
+.admin-legacy button.bg-gray-600,
+.admin-legacy button.bg-gray-700 {
+  background: var(--color-surface-container) !important;
+  color: var(--color-on-surface) !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Inputs and selects in legacy pages */
+.admin-legacy input[type="text"],
+.admin-legacy input[type="email"],
+.admin-legacy input[type="password"],
+.admin-legacy input[type="number"],
+.admin-legacy input[type="search"],
+.admin-legacy input[type="url"],
+.admin-legacy input[type="tel"],
+.admin-legacy input[type="date"],
+.admin-legacy textarea,
+.admin-legacy select {
+  background: var(--color-surface-container-lowest) !important;
+  border: 1px solid rgba(208, 198, 171, 0.4) !important;
+  border-radius: 0.75rem !important;
+  color: var(--color-on-surface) !important;
+  font-size: 14px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+.admin-legacy input[type="text"]:focus,
+.admin-legacy input[type="email"]:focus,
+.admin-legacy input[type="password"]:focus,
+.admin-legacy input[type="number"]:focus,
+.admin-legacy input[type="search"]:focus,
+.admin-legacy textarea:focus,
+.admin-legacy select:focus {
+  outline: none !important;
+  border-color: var(--color-on-surface) !important;
+  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.2) !important;
+}
+
+/* Status badges */
+.admin-legacy .bg-green-100 { background: rgba(46, 125, 50, 0.12) !important; }
+.admin-legacy .text-green-800 { color: #2e7d32 !important; }
+.admin-legacy .bg-red-100 { background: var(--color-error-container) !important; }
+.admin-legacy .text-red-800 { color: var(--color-on-error-container) !important; }
+.admin-legacy .bg-blue-100 { background: rgba(3, 105, 161, 0.1) !important; }
+.admin-legacy .text-blue-800 { color: #0369a1 !important; }
+.admin-legacy .bg-yellow-100 { background: rgba(255, 214, 0, 0.15) !important; }
+.admin-legacy .text-yellow-800 { color: var(--color-on-primary-fixed) !important; }

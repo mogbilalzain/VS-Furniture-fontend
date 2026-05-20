@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authStorage } from '../../../../lib/localStorage-utils';
 import { apiClient } from '../../../../lib/api';
+import { PageHeader, AdminButton } from '../../../../components/admin/ui';
 
 export default function ImportHistoryPage() {
   const router = useRouter();
@@ -98,22 +99,22 @@ export default function ImportHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Import History</h1>
-            <p className="text-gray-600 mt-1">View past bulk import operations and their results</p>
-          </div>
-          <Link
-            href="/admin/import-products"
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors inline-flex items-center text-sm"
-          >
-            <i className="fas fa-plus mr-2"></i>
-            New Import
-          </Link>
-        </div>
+    <div className="admin-legacy space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <PageHeader
+          title="Import History"
+          description="View past bulk import operations and their results."
+          breadcrumbs={[{ label: 'Imports', href: '/admin/import-products' }, { label: 'History' }]}
+          actions={
+            <Link
+              href="/admin/import-products"
+              className="inline-flex items-center gap-2 h-12 px-5 rounded-xl bg-on-surface text-surface font-bold text-[14px] hover:opacity-90 transition-opacity"
+            >
+              <span className="material-symbols-outlined text-[20px]">add</span>
+              New Import
+            </Link>
+          }
+        />
 
         {/* Error */}
         {error && (

@@ -2,68 +2,101 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import {
+  AdminCard,
+  AdminButton,
+  AdminInput,
+  AdminSelect,
+} from './ui';
 
-/**
- * Quick Actions Component for Admin Dashboard
- */
+const QUICK_ADD_ACTIONS = [
+  {
+    title: 'Add Product',
+    description: 'Create a new product',
+    icon: 'inventory_2',
+    href: '/admin/products?action=add',
+  },
+  {
+    title: 'Add Category',
+    description: 'Create a new category',
+    icon: 'category',
+    href: '/admin/categories?action=add',
+  },
+  {
+    title: 'Add Solution',
+    description: 'Create a new solution',
+    icon: 'lightbulb',
+    href: '/admin/solutions?action=add',
+  },
+  {
+    title: 'Add Certification',
+    description: 'Create a new certification',
+    icon: 'workspace_premium',
+    href: '/admin/certifications?action=add',
+  },
+];
+
+const QUICK_REPORTS = [
+  {
+    title: 'Export Products',
+    description: 'Download products list',
+    icon: 'inventory_2',
+    action: 'export-products',
+    tone: 'bg-secondary-container/60 text-on-secondary-container',
+  },
+  {
+    title: 'Export Messages',
+    description: 'Download contact messages',
+    icon: 'mail',
+    action: 'export-messages',
+    tone: 'bg-tertiary-container/60 text-on-tertiary-container',
+  },
+  {
+    title: 'System Report',
+    description: 'Generate system report',
+    icon: 'monitoring',
+    action: 'system-report',
+    tone: 'bg-primary-container/30 text-on-primary-fixed',
+  },
+];
+
+const SYSTEM_SHORTCUTS = [
+  { href: '/admin/products', icon: 'inventory_2', label: 'Products' },
+  { href: '/admin/categories', icon: 'category', label: 'Categories' },
+  { href: '/admin/contact-messages', icon: 'mail', label: 'Messages' },
+  { href: '/admin/solutions', icon: 'lightbulb', label: 'Solutions' },
+];
+
+const SEARCH_TYPES = [
+  { value: 'products', label: 'Products' },
+  { value: 'messages', label: 'Messages' },
+  { value: 'categories', label: 'Categories' },
+  { value: 'solutions', label: 'Solutions' },
+];
+
+function SectionHeader({ icon, title, subtitle }) {
+  return (
+    <div className="flex items-center gap-3 mb-5">
+      <span className="material-symbols-outlined text-primary p-2.5 bg-primary-container/20 rounded-xl text-[22px]">
+        {icon}
+      </span>
+      <div>
+        <h3 className="text-headline-md font-bold text-on-surface tracking-tight">
+          {title}
+        </h3>
+        {subtitle && (
+          <p className="text-[12px] text-on-surface-variant/70 font-medium">
+            {subtitle}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const QuickActions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState('products');
-
-  const quickAddActions = [
-    {
-      title: 'Add Product',
-      description: 'Create a new product',
-      icon: '📦',
-      href: '/admin/products?action=add',
-      color: 'bg-blue-500 hover:bg-blue-600',
-    },
-    {
-      title: 'Add Category',
-      description: 'Create a new category',
-      icon: '📂',
-      href: '/admin/categories?action=add',
-      color: 'bg-green-500 hover:bg-green-600',
-    },
-    {
-      title: 'Add Solution',
-      description: 'Create a new solution',
-      icon: '💡',
-      href: '/admin/solutions?action=add',
-      color: 'bg-purple-500 hover:bg-purple-600',
-    },
-    {
-      title: 'Add Certification',
-      description: 'Create a new certification',
-      icon: '🏆',
-      href: '/admin/certifications?action=add',
-      color: 'bg-yellow-500 hover:bg-yellow-600',
-    },
-  ];
-
-  const quickReports = [
-    {
-      title: 'Export Products',
-      description: 'Download products list',
-      icon: '📊',
-      action: 'export-products',
-      color: 'bg-indigo-500 hover:bg-indigo-600',
-    },
-    {
-      title: 'Export Messages',
-      description: 'Download contact messages',
-      icon: '📧',
-      action: 'export-messages',
-      color: 'bg-pink-500 hover:bg-pink-600',
-    },
-    {
-      title: 'System Report',
-      description: 'Generate system report',
-      icon: '📈',
-      action: 'system-report',
-      color: 'bg-teal-500 hover:bg-teal-600',
-    },
-  ];
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -81,12 +114,8 @@ const QuickActions = () => {
 
   const handleQuickReport = async (action) => {
     try {
-      // This would implement actual export functionality
       console.log(`Generating report: ${action}`);
-      
-      // Placeholder for actual implementation
       alert(`${action} feature will be implemented soon!`);
-      
     } catch (error) {
       console.error('Error generating report:', error);
       alert('Error generating report. Please try again.');
@@ -94,138 +123,126 @@ const QuickActions = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-gutter">
       {/* Quick Search */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="mr-2">🔍</span>
-          Quick Search
-        </h3>
-        
-        <form onSubmit={handleSearch} className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="products">Products</option>
-              <option value="messages">Messages</option>
-              <option value="categories">Categories</option>
-              <option value="solutions">Solutions</option>
-            </select>
-            
-            <div className="flex-1 flex">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={`Search ${searchType}...`}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-              >
-                Search
-              </button>
-            </div>
-          </div>
+      <AdminCard>
+        <SectionHeader
+          icon="search"
+          title="Quick Search"
+          subtitle="Jump straight to any module"
+        />
+        <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-[180px_1fr_auto] gap-3 items-end">
+          <AdminSelect
+            label="Type"
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value)}
+            options={SEARCH_TYPES}
+          />
+          <AdminInput
+            label="Keyword"
+            icon="search"
+            placeholder={`Search ${searchType}…`}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <AdminButton type="submit" variant="primary" size="lg" icon="arrow_forward">
+            Search
+          </AdminButton>
         </form>
-      </div>
+      </AdminCard>
 
       {/* Quick Add Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="mr-2">➕</span>
-          Quick Add
-        </h3>
-        
+      <AdminCard>
+        <SectionHeader
+          icon="add_circle"
+          title="Quick Add"
+          subtitle="Create new entities in one click"
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {quickAddActions.map((action, index) => (
+          {QUICK_ADD_ACTIONS.map((action) => (
             <Link
-              key={index}
+              key={action.title}
               href={action.href}
-              className={`${action.color} text-white p-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md`}
+              className="group relative flex flex-col gap-3 p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 hover:border-on-surface/30 hover:-translate-y-0.5 transition-all duration-200 admin-shadow-soft"
             >
-              <div className="text-center">
-                <div className="text-2xl mb-2">{action.icon}</div>
-                <div className="font-medium text-sm">{action.title}</div>
-                <div className="text-xs opacity-90 mt-1">{action.description}</div>
+              <span className="material-symbols-outlined text-primary p-2.5 bg-primary-container/20 rounded-xl text-[22px] w-fit">
+                {action.icon}
+              </span>
+              <div>
+                <p className="text-on-surface font-bold text-[14px] tracking-tight">
+                  {action.title}
+                </p>
+                <p className="text-on-surface-variant/70 text-[12px] mt-0.5">
+                  {action.description}
+                </p>
               </div>
+              <span className="material-symbols-outlined absolute right-4 top-4 text-on-surface-variant/40 text-[18px] group-hover:text-on-surface transition-colors">
+                arrow_outward
+              </span>
             </Link>
           ))}
         </div>
-      </div>
+      </AdminCard>
 
       {/* Quick Reports */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="mr-2">📋</span>
-          Quick Reports
-        </h3>
-        
+      <AdminCard>
+        <SectionHeader
+          icon="description"
+          title="Quick Reports"
+          subtitle="Export data and generate summaries"
+        />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {quickReports.map((report, index) => (
+          {QUICK_REPORTS.map((report) => (
             <button
-              key={index}
+              key={report.title}
+              type="button"
               onClick={() => handleQuickReport(report.action)}
-              className={`${report.color} text-white p-4 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md text-left`}
+              className="group flex items-start gap-3 p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 hover:border-on-surface/30 hover:-translate-y-0.5 transition-all duration-200 admin-shadow-soft text-left"
             >
-              <div className="flex items-start space-x-3">
-                <div className="text-xl">{report.icon}</div>
-                <div>
-                  <div className="font-medium text-sm">{report.title}</div>
-                  <div className="text-xs opacity-90 mt-1">{report.description}</div>
-                </div>
+              <span className={`material-symbols-outlined p-2.5 rounded-xl text-[22px] ${report.tone}`}>
+                {report.icon}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-on-surface font-bold text-[14px] tracking-tight">
+                  {report.title}
+                </p>
+                <p className="text-on-surface-variant/70 text-[12px] mt-0.5">
+                  {report.description}
+                </p>
               </div>
+              <span className="material-symbols-outlined text-on-surface-variant/40 text-[18px] group-hover:text-on-surface transition-colors">
+                download
+              </span>
             </button>
           ))}
         </div>
-      </div>
+      </AdminCard>
 
       {/* System Shortcuts */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <span className="mr-2">⚡</span>
-          System Shortcuts
-        </h3>
-        
+      <AdminCard>
+        <SectionHeader
+          icon="bolt"
+          title="System Shortcuts"
+          subtitle="Jump to the most-used sections"
+        />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Link
-            href="/admin/products"
-            className="flex flex-col items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          >
-            <span className="text-xl mb-1">📦</span>
-            <span className="text-xs font-medium">Products</span>
-          </Link>
-          
-          <Link
-            href="/admin/categories"
-            className="flex flex-col items-center p-3 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-          >
-            <span className="text-xl mb-1">📂</span>
-            <span className="text-xs font-medium">Categories</span>
-          </Link>
-          
-          <Link
-            href="/admin/contact-messages"
-            className="flex flex-col items-center p-3 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-          >
-            <span className="text-xl mb-1">📧</span>
-            <span className="text-xs font-medium">Messages</span>
-          </Link>
-          
-          <Link
-            href="/admin/solutions"
-            className="flex flex-col items-center p-3 text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
-          >
-            <span className="text-xl mb-1">💡</span>
-            <span className="text-xs font-medium">Solutions</span>
-          </Link>
+          {SYSTEM_SHORTCUTS.map((shortcut) => (
+            <Link
+              key={shortcut.href}
+              href={shortcut.href}
+              className="group flex flex-col items-center gap-2 p-5 rounded-2xl bg-surface-container-low hover:bg-surface-container transition-colors"
+            >
+              <span className="material-symbols-outlined text-on-surface-variant text-[26px] group-hover:text-primary transition-colors">
+                {shortcut.icon}
+              </span>
+              <span className="text-[12px] font-bold tracking-wider uppercase text-on-surface-variant group-hover:text-on-surface transition-colors">
+                {shortcut.label}
+              </span>
+            </Link>
+          ))}
         </div>
-      </div>
-    </div>
+      </AdminCard>
+    </section>
   );
 };
 

@@ -4,11 +4,20 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authStorage } from '../../../lib/localStorage-utils';
 import { propertiesAPI, categoriesAPI } from '../../../lib/api';
+import {
+  AdminCard,
+  AdminButton,
+  AdminBadge,
+  AdminInput,
+  AdminSelect,
+  PageHeader,
+  EmptyState,
+  StatCard,
+} from '../../../components/admin/ui';
 
 const PropertyValuesPage = () => {
   const router = useRouter();
-  
-  // State management
+
   const [properties, setProperties] = useState([]);
   const [categories, setCategories] = useState([]);
   const [propertyValues, setPropertyValues] = useState([]);
@@ -25,21 +34,16 @@ const PropertyValuesPage = () => {
     value: '',
     display_name: '',
     sort_order: 0,
-    is_active: true
+    is_active: true,
   });
   const [formErrors, setFormErrors] = useState({});
 
-  // Authentication check
   useEffect(() => {
     if (!authStorage.isAuthenticatedAdmin()) {
-      console.log('❌ Property Values page - Not authenticated admin, redirecting...');
       router.replace('/admin/login');
-    } else {
-      console.log('✅ Property Values page - User is authenticated admin');
     }
   }, [router]);
 
-  // Load data
   useEffect(() => {
     loadData();
   }, []);
@@ -48,44 +52,18 @@ const PropertyValuesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Debug: Check token before making requests
-      const token = localStorage.getItem('auth_token');
-      console.log('🔍 Token before loading data:', token ? token.substring(0, 30) + '...' : 'null');
-      console.log('🔍 Load timestamp:', new Date().toISOString());
-      
-      // Debug: Check auth state
-      console.log('🔍 Auth state:', {
-        isAuthenticated: authStorage.isAuthenticated(),
-        isAdmin: authStorage.isAdmin(),
-        role: authStorage.getRole(),
-        userData: authStorage.getUserData()
-      });
-      
-      // Add small delay to ensure token is properly saved
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Load categories, properties, and property values in parallel
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       const [categoriesResponse, propertiesResponse, propertyValuesResponse] = await Promise.all([
-        categoriesAPI.getAdminAll(), // Use admin endpoint
+        categoriesAPI.getAdminAll(),
         propertiesAPI.getAll(),
-        propertiesAPI.getPropertyValues()
+        propertiesAPI.getPropertyValues(),
       ]);
 
-      if (categoriesResponse.success) {
-        setCategories(categoriesResponse.data || []);
-      }
-
-      if (propertiesResponse.success) {
-        setProperties(propertiesResponse.data || []);
-      }
-
-      if (propertyValuesResponse.success) {
-        const valuesData = propertyValuesResponse.data || [];
-        console.log('🔍 Property Values Data:', valuesData);
-        console.log('🔍 Sample Value:', valuesData[0]);
-        setPropertyValues(valuesData);
-      }
+      if (categoriesResponse.success) setCategories(categoriesResponse.data || []);
+      if (propertiesResponse.success) setProperties(propertiesResponse.data || []);
+      if (propertyValuesResponse.success) setPropertyValues(propertyValuesResponse.data || []);
     } catch (error) {
       console.error('Error loading data:', error);
       setError('Failed to load data');
@@ -96,35 +74,32 @@ const PropertyValuesPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
-    
-    // Clear error when user starts typing
+
     if (formErrors[name]) {
-      setFormErrors(prev => ({
+      setFormErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: '',
       }));
     }
   };
 
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.category_property_id) {
       errors.category_property_id = 'Property is required';
     }
-    
     if (!formData.value.trim()) {
       errors.value = 'Value is required';
     }
-    
     if (!formData.display_name.trim()) {
       errors.display_name = 'Display name is required';
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -135,7 +110,7 @@ const PropertyValuesPage = () => {
       value: '',
       display_name: '',
       sort_order: 0,
-      is_active: true
+      is_active: true,
     });
     setFormErrors({});
     setSelectedValue(null);
@@ -153,45 +128,33 @@ const PropertyValuesPage = () => {
       value: value.value || '',
       display_name: value.display_name || '',
       sort_order: value.sort_order || 0,
-      is_active: value.is_active !== undefined ? value.is_active : true
+      is_active: value.is_active !== undefined ? value.is_active : true,
     });
     setShowModal(true);
   };
 
   const handleSaveValue = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
+    if (!validateForm()) return;
+
     try {
       setModalLoading(true);
       setError(null);
 
       let response;
       if (selectedValue) {
-        // Update existing value
         response = await propertiesAPI.updatePropertyValue(selectedValue.id, formData);
       } else {
-        // Create new value
         const propertyId = formData.category_property_id;
         response = await propertiesAPI.createPropertyValue(propertyId, formData);
       }
 
       if (response.success) {
-        await loadData(); // Reload data
+        await loadData();
         setShowModal(false);
         resetForm();
-        
-        const successMessage = selectedValue 
-          ? '✅ Property value updated successfully!' 
-          : '🎉 Property value created successfully!';
-        alert(successMessage);
       } else {
-        if (response.errors) {
-          setFormErrors(response.errors);
-        }
+        if (response.errors) setFormErrors(response.errors);
         setError(response.message || 'Failed to save property value');
       }
     } catch (error) {
@@ -203,17 +166,14 @@ const PropertyValuesPage = () => {
   };
 
   const handleDeleteValue = async (valueId) => {
-    if (!confirm('Are you sure you want to delete this property value?')) {
-      return;
-    }
+    if (!confirm('Are you sure you want to delete this property value?')) return;
 
     try {
       setLoading(true);
       const response = await propertiesAPI.deletePropertyValue(valueId);
-      
+
       if (response.success) {
         await loadData();
-        alert('✅ Property value deleted successfully!');
       } else {
         setError(response.message || 'Failed to delete property value');
       }
@@ -225,483 +185,269 @@ const PropertyValuesPage = () => {
     }
   };
 
-  // Filter values based on category, property, and search
-  const filteredValues = propertyValues.filter(value => {
-    // Get category ID from the value's property or category object
+  const filteredValues = propertyValues.filter((value) => {
     const categoryId = value.category?.id || value.property?.category?.id || value.category_id;
     const propertyId = value.property?.id || value.category_property_id;
-    
+
     const matchesCategory = selectedCategory === 'all' || categoryId == selectedCategory;
     const matchesProperty = selectedProperty === 'all' || propertyId == selectedProperty;
-    const matchesSearch = !searchTerm || 
-                         (value.value && value.value.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                         (value.display_name && value.display_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch =
+      !searchTerm ||
+      (value.value && value.value.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (value.display_name &&
+        value.display_name.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesCategory && matchesProperty && matchesSearch;
   });
 
-  // Group values by property
   const groupedValues = filteredValues.reduce((acc, value) => {
     const propertyId = value.property?.id || value.category_property_id || 'uncategorized';
-    if (!acc[propertyId]) {
-      acc[propertyId] = [];
-    }
+    if (!acc[propertyId]) acc[propertyId] = [];
     acc[propertyId].push(value);
     return acc;
   }, {});
 
   const getPropertyName = (propertyId) => {
     if (propertyId === 'uncategorized') return 'Uncategorized';
-    const property = properties.find(p => p.id == propertyId);
-    return property ? `${property.display_name || property.name}` : `Property ${propertyId}`;
+    const property = properties.find((p) => p.id == propertyId);
+    return property ? property.display_name || property.name : `Property ${propertyId}`;
   };
 
   const getCategoryName = (categoryId) => {
-    const category = categories.find(c => c.id == categoryId);
+    const category = categories.find((c) => c.id == categoryId);
     return category ? category.name : `Category ${categoryId}`;
   };
 
   const getPropertyCategory = (propertyId) => {
-    const property = properties.find(p => p.id == propertyId);
-    return property ? getCategoryName(property.category?.id || property.category_id) : 'Unknown Category';
+    const property = properties.find((p) => p.id == propertyId);
+    return property
+      ? getCategoryName(property.category?.id || property.category_id)
+      : 'Unknown Category';
   };
 
-  // Get properties for selected category
-  const availableProperties = selectedCategory === 'all' 
-    ? properties 
-    : properties.filter(p => p.category_id == selectedCategory);
+  const availableProperties =
+    selectedCategory === 'all'
+      ? properties
+      : properties.filter((p) => p.category_id == selectedCategory);
 
   if (loading && propertyValues.length === 0) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '50vh'
-      }}>
-        <div style={{
-          fontSize: '1.125rem',
-          color: '#6b7280'
-        }}>
-          Loading property values...
-        </div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 rounded-full border-4 border-surface-container border-t-primary-container animate-spin" />
       </div>
     );
   }
 
-  return (
-    <div className="admin-property-values" style={{ fontFamily: "'Quasimoda', 'Inter', sans-serif" }}>
-      {/* Page Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '1.5rem'
-      }}>
-        <div>
-          <h1 style={{
-            fontSize: '1.875rem',
-            fontWeight: 700,
-            color: '#111827',
-            margin: 0
-          }}>Property Values Management</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-            <p style={{
-              color: '#6b7280',
-              margin: 0
-            }}>Manage property values and their settings</p>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <span style={{
-                background: '#f3f4f6',
-                color: '#374151',
-                padding: '0.25rem 0.75rem',
-                borderRadius: '9999px',
-                fontSize: '0.75rem',
-                fontWeight: 500
-              }}>
-                📊 {propertyValues.length} total values
-              </span>
-              <span style={{
-                background: '#ecfdf5',
-                color: '#065f46',
-                padding: '0.25rem 0.75rem',
-                borderRadius: '9999px',
-                fontSize: '0.75rem',
-                fontWeight: 500
-              }}>
-                ✅ {propertyValues.filter(v => v.is_active).length} active
-              </span>
-              <span style={{
-                background: '#fef3c7',
-                color: '#92400e',
-                padding: '0.25rem 0.75rem',
-                borderRadius: '9999px',
-                fontSize: '0.75rem',
-                fontWeight: 500
-              }}>
-                🔍 {filteredValues.length} filtered
-              </span>
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={handleAddValue}
-          style={{
-            background: '#FFD700',
-            color: '#2c2c2c',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.75rem 1.5rem',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = '#e6c200';
-            e.target.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = '#FFD700';
-            e.target.style.transform = 'translateY(0)';
-          }}
-        >
-          <i className="fas fa-plus"></i>
-          Add Property Value
-        </button>
-      </div>
+  const activeCount = propertyValues.filter((v) => v.is_active).length;
 
-      {/* Error Message */}
+  const categoryOptions = [
+    { value: 'all', label: 'All Categories' },
+    ...categories.map((c) => ({ value: c.id, label: c.name })),
+  ];
+
+  const propertyOptions = [
+    { value: 'all', label: 'All Properties' },
+    ...availableProperties.map((p) => ({
+      value: p.id,
+      label: `${p.display_name} (${getCategoryName(p.category_id)})`,
+    })),
+  ];
+
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Property Values"
+        description="Manage property values and their settings."
+        actions={
+          <AdminButton variant="primary" size="lg" icon="add" onClick={handleAddValue}>
+            Add Property Value
+          </AdminButton>
+        }
+      />
+
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-gutter">
+        <StatCard
+          icon="list_alt"
+          label="Total Values"
+          value={propertyValues.length.toString()}
+          change="Catalog"
+          changeType="neutral"
+        />
+        <StatCard
+          icon="check_circle"
+          label="Active"
+          value={activeCount.toString()}
+          change="Published"
+          changeType="positive"
+        />
+        <StatCard
+          icon="filter_alt"
+          label="Filtered"
+          value={filteredValues.length.toString()}
+          change="In view"
+          changeType="neutral"
+        />
+      </section>
+
       {error && (
-        <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          color: '#dc2626',
-          padding: '0.75rem',
-          borderRadius: '8px',
-          marginBottom: '1rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}>
-          <i className="fas fa-exclamation-triangle"></i>
-          {error}
+        <div className="flex items-start justify-between gap-4 px-5 py-3 rounded-2xl bg-error-container border border-error/30 text-on-error-container">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined mt-0.5">error</span>
+            <div>{error}</div>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-on-error-container/70 hover:text-on-error-container"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
         </div>
       )}
 
       {/* Filters */}
-      <div style={{
-        background: 'white',
-        padding: '1.5rem',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        marginBottom: '1.5rem'
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: '1rem',
-          alignItems: 'end'
-        }}>
-          {/* Category Filter */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}>
-              Filter by Category
-            </label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setSelectedProperty('all'); // Reset property filter
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '0.875rem'
-              }}
-            >
-              <option value="all">All Categories</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Property Filter */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}>
-              Filter by Property
-            </label>
-            <select
-              value={selectedProperty}
-              onChange={(e) => setSelectedProperty(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '0.875rem'
-              }}
-            >
-              <option value="all">All Properties</option>
-              {availableProperties.map(property => (
-                <option key={property.id} value={property.id}>
-                  {property.display_name} ({getCategoryName(property.category_id)})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Search */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}>
-              Search Values
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by value or display name..."
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '0.875rem'
-              }}
-            />
-          </div>
+      <AdminCard padding="p-5 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <AdminSelect
+            label="Filter by Category"
+            value={selectedCategory}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setSelectedProperty('all');
+            }}
+            options={categoryOptions}
+          />
+          <AdminSelect
+            label="Filter by Property"
+            value={selectedProperty}
+            onChange={(e) => setSelectedProperty(e.target.value)}
+            options={propertyOptions}
+          />
+          <AdminInput
+            label="Search Values"
+            icon="search"
+            placeholder="Search by value or display name…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-      </div>
+      </AdminCard>
 
-      {/* Property Values List */}
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden'
-      }}>
-        {Object.keys(groupedValues).length === 0 ? (
-          <div style={{
-            padding: '3rem',
-            textAlign: 'center',
-            color: '#6b7280'
-          }}>
-            <i className="fas fa-list" style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }}></i>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 500, marginBottom: '0.5rem' }}>
-              No property values found
-            </h3>
-            <p style={{ fontSize: '0.875rem' }}>
-              {searchTerm || selectedCategory !== 'all' || selectedProperty !== 'all'
-                ? 'Try adjusting your filters or search terms'
-                : 'Start by adding your first property value'
-              }
-            </p>
-          </div>
-        ) : (
-          Object.keys(groupedValues).map(propertyId => (
-            <div key={propertyId} style={{ borderBottom: '1px solid #e5e7eb' }}>
-              {/* Property Header */}
-              <div style={{
-                background: '#f9fafb',
-                padding: '1rem 1.5rem',
-                borderBottom: '1px solid #e5e7eb'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    color: '#111827',
-                    margin: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    <i className="fas fa-cog"></i>
-                    {getPropertyName(propertyId)}
-                    <span style={{
-                      background: '#e5e7eb',
-                      color: '#6b7280',
-                      padding: '0.125rem 0.5rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.75rem'
-                    }}>
-                      {groupedValues[propertyId].length} values
-                    </span>
-                  </h3>
-                  <span style={{
-                    background: '#dbeafe',
-                    color: '#1e40af',
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '9999px',
-                    fontSize: '0.75rem',
-                    fontWeight: 500
-                  }}>
-                    📂 {getPropertyCategory(propertyId)}
+      {/* Values List */}
+      {Object.keys(groupedValues).length === 0 ? (
+        <EmptyState
+          icon="list_alt"
+          title="No property values found"
+          description={
+            searchTerm || selectedCategory !== 'all' || selectedProperty !== 'all'
+              ? 'Try adjusting your filters or search terms'
+              : 'Start by adding your first property value'
+          }
+          action={
+            <AdminButton variant="primary" icon="add" onClick={handleAddValue}>
+              Add Property Value
+            </AdminButton>
+          }
+        />
+      ) : (
+        <AdminCard padding="p-0" className="overflow-hidden">
+          {Object.keys(groupedValues).map((propertyId, propIdx) => (
+            <div
+              key={propertyId}
+              className={propIdx > 0 ? 'border-t border-surface-container' : ''}
+            >
+              <div className="bg-surface-container-low px-6 py-4 flex items-center justify-between border-b border-surface-container">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                    tune
                   </span>
+                  <h3 className="text-[14px] font-bold text-on-surface tracking-tight truncate">
+                    {getPropertyName(propertyId)}
+                  </h3>
+                  <AdminBadge tone="neutral">
+                    {groupedValues[propertyId].length} values
+                  </AdminBadge>
                 </div>
+                <AdminBadge tone="info">
+                  <span className="material-symbols-outlined text-[12px] mr-1">category</span>
+                  {getPropertyCategory(propertyId)}
+                </AdminBadge>
               </div>
-
-              {/* Values in this property */}
-              <div>
+              <div className="divide-y divide-surface-container">
                 {groupedValues[propertyId]
                   .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-                  .map(value => (
-                  <div
-                    key={value.id}
-                    style={{
-                      padding: '1.5rem',
-                      borderBottom: '1px solid #f3f4f6',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'start'
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                        <h4 style={{
-                          fontSize: '1rem',
-                          fontWeight: 600,
-                          color: '#111827',
-                          margin: 0
-                        }}>
-                          {value.display_name}
-                        </h4>
-                        <span style={{
-                          background: value.is_active ? '#dcfce7' : '#fef2f2',
-                          color: value.is_active ? '#166534' : '#dc2626',
-                          padding: '0.125rem 0.5rem',
-                          borderRadius: '9999px',
-                          fontSize: '0.75rem'
-                        }}>
-                          {value.is_active ? 'Active' : 'Inactive'}
-                        </span>
-
+                  .map((value) => (
+                    <div
+                      key={value.id}
+                      className="px-6 py-4 flex items-start justify-between gap-4 hover:bg-surface-container-low/50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <h4 className="text-[15px] font-bold text-on-surface tracking-tight">
+                            {value.display_name}
+                          </h4>
+                          <AdminBadge tone={value.is_active ? 'active' : 'pending'} dot>
+                            {value.is_active ? 'Active' : 'Inactive'}
+                          </AdminBadge>
+                          {value.sort_order > 0 && (
+                            <AdminBadge tone="neutral">Sort: {value.sort_order}</AdminBadge>
+                          )}
+                        </div>
+                        <p className="text-[13px] text-on-surface-variant mb-2 flex items-center gap-1.5">
+                          Value:
+                          <code className="px-2 py-0.5 rounded-md bg-surface-container text-on-surface font-mono text-[12px]">
+                            {value.value}
+                          </code>
+                        </p>
+                        <div className="flex gap-4 text-[13px] text-on-surface-variant/80 flex-wrap">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[14px]">
+                              category
+                            </span>
+                            Category:{' '}
+                            <strong className="text-on-surface">
+                              {value.category?.name || getCategoryName(value.category?.id)}
+                            </strong>
+                          </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[14px]">
+                              tune
+                            </span>
+                            Property:{' '}
+                            <strong className="text-on-surface">
+                              {value.property?.display_name || value.property?.name}
+                            </strong>
+                          </span>
+                        </div>
                       </div>
-                      <p style={{
-                        fontSize: '0.875rem',
-                        color: '#6b7280',
-                        margin: '0 0 0.5rem 0'
-                      }}>
-                        Value: <code style={{ background: '#f3f4f6', padding: '0.125rem 0.25rem', borderRadius: '4px' }}>
-                          {value.value}
-                        </code>
-                      </p>
-                      <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
-                        <span>
-                          📂 Category: <strong>{value.category?.name || getCategoryName(value.category?.id)}</strong>
-                        </span>
-                        <span>
-                          🏷️ Property: <strong>{value.property?.display_name || value.property?.name}</strong>
-                        </span>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => handleEditValue(value)}
+                          title="Edit"
+                          className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteValue(value.id)}
+                          title="Delete"
+                          className="w-9 h-9 rounded-lg hover:bg-error-container text-error flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
                       </div>
                     </div>
-                    
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        onClick={() => handleEditValue(value)}
-                        style={{
-                          background: '#eff6ff',
-                          color: '#2563eb',
-                          border: '1px solid #dbeafe',
-                          borderRadius: '6px',
-                          padding: '0.5rem',
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem'
-                        }}
-                        title="Edit Value"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteValue(value.id)}
-                        style={{
-                          background: '#fef2f2',
-                          color: '#dc2626',
-                          border: '1px solid #fecaca',
-                          borderRadius: '6px',
-                          padding: '0.5rem',
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem'
-                        }}
-                        title="Delete Value"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </AdminCard>
+      )}
 
-      {/* Add/Edit Property Value Modal */}
+      {/* Modal */}
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '2rem',
-            width: '100%',
-            maxWidth: '600px',
-            maxHeight: '90vh',
-            overflow: 'auto'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <h2 style={{
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                color: '#111827',
-                margin: 0
-              }}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <AdminCard className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" padding="p-6 sm:p-8">
+            <div className="flex items-start justify-between mb-6">
+              <h2 className="text-headline-md font-bold text-on-surface">
                 {selectedValue ? 'Edit Property Value' : 'Add New Property Value'}
               </h2>
               <button
@@ -709,217 +455,94 @@ const PropertyValuesPage = () => {
                   setShowModal(false);
                   resetForm();
                 }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  color: '#6b7280',
-                  cursor: 'pointer'
-                }}
+                className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
               >
-                ×
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSaveValue}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {/* Property */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    color: '#374151',
-                    marginBottom: '0.5rem'
-                  }}>
-                    Property *
-                  </label>
-                  <select
-                    name="category_property_id"
-                    value={formData.category_property_id}
-                    onChange={handleInputChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: `2px solid ${formErrors.category_property_id ? '#dc2626' : '#e5e7eb'}`,
-                      borderRadius: '8px',
-                      fontSize: '0.875rem'
-                    }}
-                  >
-                    <option value="">Select a property</option>
-                    {properties.map(property => (
-                      <option key={property.id} value={property.id}>
-                        {property.display_name} ({getCategoryName(property.category_id)})
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.category_property_id && (
-                    <div style={{ color: '#dc2626', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                      {formErrors.category_property_id}
-                    </div>
-                  )}
-                </div>
+            <form onSubmit={handleSaveValue} className="space-y-5">
+              <AdminSelect
+                label="Property *"
+                name="category_property_id"
+                value={formData.category_property_id}
+                onChange={handleInputChange}
+                error={formErrors.category_property_id}
+                options={[
+                  { value: '', label: 'Select a property' },
+                  ...properties.map((p) => ({
+                    value: p.id,
+                    label: `${p.display_name} (${getCategoryName(p.category_id)})`,
+                  })),
+                ]}
+              />
 
-                {/* Value and Display Name */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: '#374151',
-                      marginBottom: '0.5rem'
-                    }}>
-                      Value *
-                    </label>
-                    <input
-                      type="text"
-                      name="value"
-                      value={formData.value}
-                      onChange={handleInputChange}
-                      placeholder="e.g., student-tables"
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: `2px solid ${formErrors.value ? '#dc2626' : '#e5e7eb'}`,
-                        borderRadius: '8px',
-                        fontSize: '0.875rem'
-                      }}
-                    />
-                    {formErrors.value && (
-                      <div style={{ color: '#dc2626', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                        {formErrors.value}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: '#374151',
-                      marginBottom: '0.5rem'
-                    }}>
-                      Display Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="display_name"
-                      value={formData.display_name}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Student Tables/Desks"
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: `2px solid ${formErrors.display_name ? '#dc2626' : '#e5e7eb'}`,
-                        borderRadius: '8px',
-                        fontSize: '0.875rem'
-                      }}
-                    />
-                    {formErrors.display_name && (
-                      <div style={{ color: '#dc2626', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                        {formErrors.display_name}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Sort Order */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    color: '#374151',
-                    marginBottom: '0.5rem'
-                  }}>
-                    Sort Order
-                  </label>
-                  <input
-                    type="number"
-                    name="sort_order"
-                    value={formData.sort_order}
-                    onChange={handleInputChange}
-                    placeholder="0"
-                    min="0"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '0.875rem'
-                    }}
-                  />
-                </div>
-
-                {/* Active Checkbox */}
-                <div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input
-                      type="checkbox"
-                      name="is_active"
-                      checked={formData.is_active}
-                      onChange={handleInputChange}
-                    />
-                    <span style={{ fontSize: '0.875rem', color: '#374151' }}>Active</span>
-                  </label>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <AdminInput
+                  label="Value *"
+                  name="value"
+                  value={formData.value}
+                  onChange={handleInputChange}
+                  placeholder="e.g., student-tables"
+                  error={formErrors.value}
+                />
+                <AdminInput
+                  label="Display Name *"
+                  name="display_name"
+                  value={formData.display_name}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Student Tables/Desks"
+                  error={formErrors.display_name}
+                />
               </div>
 
-              {/* Modal Actions */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '1rem',
-                marginTop: '2rem'
-              }}>
-                <button
+              <AdminInput
+                label="Sort Order"
+                type="number"
+                name="sort_order"
+                value={formData.sort_order}
+                onChange={handleInputChange}
+                placeholder="0"
+                min="0"
+              />
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={handleInputChange}
+                  className="w-5 h-5 rounded accent-primary-container"
+                />
+                <span className="text-[14px] text-on-surface">Active</span>
+              </label>
+
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-surface-container">
+                <AdminButton
                   type="button"
+                  variant="secondary"
                   onClick={() => {
                     setShowModal(false);
                     resetForm();
                   }}
-                  style={{
-                    background: '#f3f4f6',
-                    color: '#374151',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1.5rem',
-                    fontSize: '0.875rem',
-                    cursor: 'pointer'
-                  }}
                 >
                   Cancel
-                </button>
-                <button
+                </AdminButton>
+                <AdminButton
                   type="submit"
+                  variant="primary"
+                  icon={modalLoading ? 'progress_activity' : selectedValue ? 'save' : 'add'}
                   disabled={modalLoading}
-                  style={{
-                    background: modalLoading ? '#9ca3af' : '#FFD700',
-                    color: '#2c2c2c',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1.5rem',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    cursor: modalLoading ? 'not-allowed' : 'pointer'
-                  }}
                 >
-                  {modalLoading ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin" style={{ marginRight: '0.5rem' }}></i>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-save" style={{ marginRight: '0.5rem' }}></i>
-                      {selectedValue ? 'Update Value' : 'Create Value'}
-                    </>
-                  )}
-                </button>
+                  {modalLoading
+                    ? 'Saving…'
+                    : selectedValue
+                    ? 'Update Value'
+                    : 'Create Value'}
+                </AdminButton>
               </div>
             </form>
-          </div>
+          </AdminCard>
         </div>
       )}
     </div>

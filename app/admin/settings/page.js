@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authStorage } from '../../../lib/localStorage-utils'
 import { settingsAPI } from '../../../lib/api'
+import { PageHeader, AdminButton } from '../../../components/admin/ui'
 
 const SettingsPage = () => {
   const router = useRouter()
@@ -625,86 +626,27 @@ const SettingsPage = () => {
   }
 
   return (
-    <div>
-      {/* Page Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '1.5rem'
-      }}>
-        <div>
-          <h1 style={{
-            fontSize: '1.875rem',
-            fontWeight: 700,
-            color: '#111827',
-            margin: 0
-          }}>Settings</h1>
-          <p style={{
-            color: '#6b7280',
-            margin: '0.25rem 0 0 0'
-          }}>Manage your application settings</p>
-        </div>
-        <div style={{
-          display: 'flex',
-          gap: '1rem'
-        }}>
-          <button 
-            onClick={resetSettings}
-            style={{
-              background: '#6b7280',
-              color: 'white',
-              fontWeight: 600,
-              padding: '0.75rem 1.5rem',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = '#4b5563'
-              e.target.style.transform = 'translateY(-2px)'
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = '#6b7280'
-              e.target.style.transform = 'translateY(0)'
-            }}
-          >
-            Reset
-          </button>
-          <button
-            onClick={saveSettings}
-            disabled={isSaving}
-            style={{
-              background: '#FFD700',
-              color: '#000',
-              fontWeight: 600,
-              padding: '0.75rem 1.5rem',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-              opacity: isSaving ? 0.7 : 1,
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-            onMouseEnter={(e) => {
-              if (isSaving) return
-              e.target.style.background = '#e6c200'
-              e.target.style.transform = 'translateY(-2px)'
-            }}
-            onMouseLeave={(e) => {
-              if (isSaving) return
-              e.target.style.background = '#FFD700'
-              e.target.style.transform = 'translateY(0)'
-            }}
-          >
-            <i className={isSaving ? 'fas fa-spinner fa-spin' : 'fas fa-save'}></i>
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </div>
+    <div className="admin-legacy space-y-6">
+      <PageHeader
+        title="Settings"
+        description="Manage your application settings."
+        actions={
+          <>
+            <AdminButton variant="secondary" size="lg" icon="restart_alt" onClick={resetSettings}>
+              Reset
+            </AdminButton>
+            <AdminButton
+              variant="primary"
+              size="lg"
+              icon={isSaving ? 'progress_activity' : 'save'}
+              onClick={saveSettings}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving…' : 'Save Changes'}
+            </AdminButton>
+          </>
+        }
+      />
 
       {/* Settings Content */}
       <div style={{

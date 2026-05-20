@@ -4,22 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { certificationsAPI, productsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { 
-  PlusIcon, 
-  PencilIcon, 
-  TrashIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  LinkIcon,
-  XMarkIcon,
-  CheckIcon,
-  PhotoIcon
-} from '@heroicons/react/24/outline';
+import {
+  AdminCard,
+  AdminButton,
+  AdminBadge,
+  AdminInput,
+  PageHeader,
+  EmptyState,
+  StatCard,
+} from '../../../components/admin/ui';
 
 const AdminCertifications = () => {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  
+
   const [certifications, setCertifications] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,13 +31,12 @@ const AdminCertifications = () => {
     title: '',
     description: '',
     image_url: '',
-    is_active: true
+    is_active: true,
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Authentication check
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
       router.push('/admin/login');
@@ -86,7 +83,6 @@ const AdminCertifications = () => {
       } else {
         await certificationsAPI.admin.create(formData);
       }
-      
       setShowModal(false);
       setEditingCertification(null);
       resetForm();
@@ -97,17 +93,13 @@ const AdminCertifications = () => {
   };
 
   const handleEdit = (certification) => {
-    console.log('🔧 Editing certification:', certification);
-    console.log('📷 Image URL:', certification.image_url);
-    
     setEditingCertification(certification);
     setFormData({
       title: certification.title,
       description: certification.description,
       image_url: certification.image_url || '',
-      is_active: certification.is_active
+      is_active: certification.is_active,
     });
-    // Clear any previous upload state
     setImageFile(null);
     setImagePreview(null);
     setShowModal(true);
@@ -127,10 +119,9 @@ const AdminCertifications = () => {
   const handleManageProducts = async (certification) => {
     setSelectedCertificationForProducts(certification);
     try {
-      // Get current products for this certification
       const response = await certificationsAPI.getById(certification.id);
       if (response.success && response.data.products) {
-        setSelectedProducts(response.data.products.map(p => p.id));
+        setSelectedProducts(response.data.products.map((p) => p.id));
       }
     } catch (err) {
       console.error('Error fetching certification products:', err);
@@ -142,23 +133,18 @@ const AdminCertifications = () => {
   const handleSaveProductAssignments = async () => {
     try {
       const certificationId = selectedCertificationForProducts.id;
-      
-      // Get current certification data to see existing product assignments
       const currentResponse = await certificationsAPI.getById(certificationId);
-      const currentProductIds = currentResponse.success && currentResponse.data.products 
-        ? currentResponse.data.products.map(p => p.id) 
-        : [];
+      const currentProductIds =
+        currentResponse.success && currentResponse.data.products
+          ? currentResponse.data.products.map((p) => p.id)
+          : [];
 
-      // Find products to add and remove
-      const productsToAdd = selectedProducts.filter(id => !currentProductIds.includes(id));
-      const productsToRemove = currentProductIds.filter(id => !selectedProducts.includes(id));
+      const productsToAdd = selectedProducts.filter((id) => !currentProductIds.includes(id));
+      const productsToRemove = currentProductIds.filter((id) => !selectedProducts.includes(id));
 
-      // Add new products
       for (const productId of productsToAdd) {
         await certificationsAPI.admin.attachToProduct(productId, certificationId);
       }
-
-      // Remove unselected products
       for (const productId of productsToRemove) {
         await certificationsAPI.admin.detachFromProduct(productId, certificationId);
       }
@@ -173,53 +159,36 @@ const AdminCertifications = () => {
   };
 
   const toggleProductSelection = (productId) => {
-    setSelectedProducts(prev => {
-      if (prev.includes(productId)) {
-        return prev.filter(id => id !== productId);
-      } else {
-        return [...prev, productId];
-      }
-    });
+    setSelectedProducts((prev) =>
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
+    );
   };
 
   const handleImageSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
       setImageFile(file);
-      
-      // Create preview
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
+      reader.onload = (e) => setImagePreview(e.target.result);
       reader.readAsDataURL(file);
     }
   };
 
   const handleImageUpload = async () => {
     if (!imageFile) return;
-    
     try {
       setUploadingImage(true);
-      console.log('🔄 Uploading image:', imageFile.name);
-      
       const response = await certificationsAPI.admin.uploadImage(imageFile);
-      console.log('📥 Upload response:', response);
-      
       if (response.success) {
-        console.log('✅ Image uploaded successfully:', response.data.image_url);
-        setFormData(prev => ({ ...prev, image_url: response.data.image_url })); // relative for DB
+        setFormData((prev) => ({ ...prev, image_url: response.data.image_url }));
         setImageFile(null);
-        // Use absolute URL (full_url) for the immediate preview so the browser
-        // does not resolve the relative path against the frontend origin.
         setImagePreview(response.data.full_url || response.data.image_url);
         alert('Image uploaded successfully!');
       } else {
-        console.error('❌ Upload failed:', response);
         alert('Error uploading image: ' + (response.message || 'Unknown error'));
       }
     } catch (err) {
-      console.error('❌ Upload error:', err);
+      console.error('Upload error:', err);
       alert('Error uploading image: ' + err.message);
     } finally {
       setUploadingImage(false);
@@ -229,7 +198,7 @@ const AdminCertifications = () => {
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview(null);
-    setFormData(prev => ({ ...prev, image_url: '' }));
+    setFormData((prev) => ({ ...prev, image_url: '' }));
   };
 
   const resetForm = () => {
@@ -242,374 +211,371 @@ const AdminCertifications = () => {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-64 mb-6"></div>
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-16 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 rounded-full border-4 border-surface-container border-t-primary-container animate-spin" />
       </div>
     );
   }
 
+  const activeCount = certifications.filter((c) => c.is_active).length;
+
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Certifications Management</h1>
-          <p className="text-gray-600 mt-2">Manage product certifications and their details</p>
-        </div>
-        <button
-                  onClick={() => {
-          setEditingCertification(null);
-          resetForm();
-          setShowModal(true);
-        }}
-          className="bg-yellow-400 hover:bg-yellow-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-        >
-          <PlusIcon className="h-5 w-5" />
-          <span>Add Certification</span>
-        </button>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Certifications"
+        description="Manage product certifications and standards."
+        actions={
+          <AdminButton
+            variant="primary"
+            icon="add"
+            size="lg"
+            onClick={() => {
+              setEditingCertification(null);
+              resetForm();
+              setShowModal(true);
+            }}
+          >
+            Add Certification
+          </AdminButton>
+        }
+      />
+
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-gutter">
+        <StatCard
+          icon="workspace_premium"
+          label="Total Certifications"
+          value={certifications.length.toString()}
+          change="Catalog"
+          changeType="neutral"
+        />
+        <StatCard
+          icon="check_circle"
+          label="Active"
+          value={activeCount.toString()}
+          change="Published"
+          changeType="positive"
+        />
+        <StatCard
+          icon="visibility_off"
+          label="Inactive"
+          value={(certifications.length - activeCount).toString()}
+          change="Hidden"
+          changeType="neutral"
+        />
+      </section>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-          {error}
+        <div className="flex items-start justify-between gap-4 px-5 py-3 rounded-2xl bg-error-container border border-error/30 text-on-error-container">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined mt-0.5">error</span>
+            <div>{error}</div>
+          </div>
+          <button onClick={() => setError(null)} className="text-on-error-container/70 hover:text-on-error-container">
+            <span className="material-symbols-outlined">close</span>
+          </button>
         </div>
       )}
 
-      {/* Certifications Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {certifications.map((certification) => (
-          <div key={certification.id} className="bg-white rounded-lg border border-gray-200 p-6">
-                                  {/* Certification Image */}
-                      {certification.image_url && (
-                        <div className="w-16 h-16 mx-auto mb-4">
-                          <img
-                            src={certification.image_url}
-                            alt={certification.title}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-
-            {/* Certification Info */}
-            <div className="text-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      {certifications.length === 0 ? (
+        <EmptyState
+          icon="workspace_premium"
+          title="No certifications yet"
+          description="Add your first certification to start associating it with products."
+          action={
+            <AdminButton
+              variant="primary"
+              icon="add"
+              onClick={() => {
+                setEditingCertification(null);
+                resetForm();
+                setShowModal(true);
+              }}
+            >
+              Add Certification
+            </AdminButton>
+          }
+        />
+      ) : (
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+          {certifications.map((certification) => (
+            <AdminCard key={certification.id} className="text-center group" padding="p-6">
+              <div className="absolute right-5 top-5">
+                <AdminBadge tone={certification.is_active ? 'active' : 'pending'} dot>
+                  {certification.is_active ? 'Active' : 'Inactive'}
+                </AdminBadge>
+              </div>
+              {certification.image_url && (
+                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-surface-container-low flex items-center justify-center overflow-hidden">
+                  <img
+                    src={certification.image_url}
+                    alt={certification.title}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+              <h3 className="text-[17px] font-bold text-on-surface mb-2 tracking-tight">
                 {certification.title}
               </h3>
-              <p className="text-gray-600 text-sm line-clamp-3">
+              <p className="text-on-surface-variant text-[13px] line-clamp-3 mb-5">
                 {certification.description}
               </p>
-            </div>
+              <div className="flex justify-center gap-1 pt-4 border-t border-surface-container">
+                <button
+                  onClick={() => handleEdit(certification)}
+                  title="Edit"
+                  className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+                <button
+                  onClick={() => handleManageProducts(certification)}
+                  title="Manage products"
+                  className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">link</span>
+                </button>
+                <button
+                  onClick={() => handleDelete(certification.id)}
+                  title="Delete"
+                  className="w-9 h-9 rounded-lg hover:bg-error-container text-error flex items-center justify-center transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+              </div>
+            </AdminCard>
+          ))}
+        </section>
+      )}
 
-            {/* Status Badge */}
-            <div className="flex justify-center mb-4">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                certification.is_active 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {certification.is_active ? (
-                  <>
-                    <EyeIcon className="h-3 w-3 mr-1" />
-                    Active
-                  </>
-                ) : (
-                  <>
-                    <EyeSlashIcon className="h-3 w-3 mr-1" />
-                    Inactive
-                  </>
-                )}
-              </span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-center space-x-2">
-              <button
-                onClick={() => handleEdit(certification)}
-                className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors"
-                title="Edit Certification"
-              >
-                <PencilIcon className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => handleManageProducts(certification)}
-                className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg transition-colors"
-                title="Manage Products"
-              >
-                <LinkIcon className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => handleDelete(certification.id)}
-                className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
-                title="Delete Certification"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Modal */}
+      {/* Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              {editingCertification ? 'Edit Certification' : 'Add New Certification'}
-            </h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <AdminCard className="w-full max-w-md max-h-[90vh] overflow-y-auto" padding="p-6 sm:p-8">
+            <div className="flex items-start justify-between mb-6">
+              <h2 className="text-headline-md font-bold text-on-surface">
+                {editingCertification ? 'Edit Certification' : 'Add New Certification'}
+              </h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                    required
-                  />
-                </div>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <AdminInput
+                label="Title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={4}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Certification Image
-                  </label>
-                  
-                  {/* Current Image Preview */}
-                  {(formData.image_url || imagePreview) && (
-                    <div className="mb-3">
-                      <div className="relative inline-block">
-                        <img
-                          src={imagePreview || formData.image_url}
-                          alt="Certification preview"
-                          className="w-20 h-20 object-contain border rounded-lg"
-                          onLoad={() => console.log('✅ Admin image loaded:', imagePreview || formData.image_url)}
-                          onError={(e) => {
-                            console.error('❌ Admin image failed:', imagePreview || formData.image_url);
-                            console.error('Error details:', e);
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={handleRemoveImage}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                        >
-                          <XMarkIcon className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Upload Section */}
-                  <div className="space-y-3">
-                    {/* File Upload */}
-                    <div>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        className="hidden"
-                        id="certification-image-upload"
-                      />
-                      <label
-                        htmlFor="certification-image-upload"
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                      >
-                        <PhotoIcon className="h-5 w-5 mr-2 text-gray-400" />
-                        Choose Image File
-                      </label>
-                    </div>
-                    
-                    {/* Upload Button */}
-                    {imageFile && (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-600">{imageFile.name}</span>
-                        <button
-                          type="button"
-                          onClick={handleImageUpload}
-                          disabled={uploadingImage}
-                          className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50"
-                        >
-                          {uploadingImage ? 'Uploading...' : 'Upload'}
-                        </button>
-                      </div>
-                    )}
-                    
-                    {/* OR Divider */}
-                    <div className="flex items-center">
-                      <div className="flex-1 border-t border-gray-300"></div>
-                      <span className="px-3 text-sm text-gray-500">OR</span>
-                      <div className="flex-1 border-t border-gray-300"></div>
-                    </div>
-                    
-                    {/* Manual URL Input */}
-                    <input
-                      type="text"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      placeholder="Or enter image URL manually"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="is_active"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="h-4 w-4 text-yellow-400 focus:ring-yellow-400 border-gray-300 rounded"
-                  />
-                  <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                    Active
-                  </label>
-                </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[12px] font-bold uppercase tracking-wider text-on-surface-variant">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={4}
+                  className="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-4 py-2.5 text-[14px] text-on-surface focus:outline-none focus:border-on-surface focus:ring-2 focus:ring-primary-container/40 transition-all resize-y"
+                />
               </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
+              <div className="space-y-3">
+                <label className="text-[12px] font-bold uppercase tracking-wider text-on-surface-variant">
+                  Certification Image
+                </label>
+
+                {(formData.image_url || imagePreview) && (
+                  <div className="relative inline-block">
+                    <div className="w-24 h-24 rounded-2xl bg-surface-container-low border border-outline-variant/30 overflow-hidden flex items-center justify-center">
+                      <img
+                        src={imagePreview || formData.image_url}
+                        alt="Preview"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute -top-2 -right-2 bg-error text-on-error rounded-full w-7 h-7 flex items-center justify-center"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">close</span>
+                    </button>
+                  </div>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                  id="certification-image-upload"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <label
+                    htmlFor="certification-image-upload"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/60 text-on-surface text-[13px] font-bold cursor-pointer hover:bg-surface-container transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">image</span>
+                    Choose file
+                  </label>
+                  {imageFile && (
+                    <AdminButton
+                      type="button"
+                      variant="dark"
+                      size="sm"
+                      icon="upload"
+                      onClick={handleImageUpload}
+                      disabled={uploadingImage}
+                    >
+                      {uploadingImage ? 'Uploading…' : 'Upload'}
+                    </AdminButton>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 py-1">
+                  <div className="flex-1 h-px bg-surface-container" />
+                  <span className="text-[11px] text-on-surface-variant/60 font-bold uppercase tracking-wider">
+                    or
+                  </span>
+                  <div className="flex-1 h-px bg-surface-container" />
+                </div>
+
+                <AdminInput
+                  placeholder="Enter image URL manually"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                />
+              </div>
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="w-5 h-5 rounded accent-primary-container"
+                />
+                <span className="text-[14px] text-on-surface">Active (visible to users)</span>
+              </label>
+
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-surface-container">
+                <AdminButton type="button" variant="secondary" onClick={() => setShowModal(false)}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg transition-colors"
-                >
+                </AdminButton>
+                <AdminButton type="submit" variant="primary" icon={editingCertification ? 'save' : 'add'}>
                   {editingCertification ? 'Update' : 'Create'}
-                </button>
+                </AdminButton>
               </div>
             </form>
-          </div>
+          </AdminCard>
         </div>
       )}
 
       {/* Product Assignment Modal */}
       {showProductModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">
-                Manage Products for "{selectedCertificationForProducts?.title}"
-              </h2>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <AdminCard className="w-full max-w-4xl max-h-[85vh] overflow-y-auto" padding="p-6 sm:p-8">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="text-headline-md font-bold text-on-surface">
+                  Manage Products
+                </h2>
+                <p className="text-on-surface-variant/70 text-[13px] mt-1">
+                  For &ldquo;{selectedCertificationForProducts?.title}&rdquo;
+                </p>
+              </div>
               <button
                 onClick={() => setShowProductModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
               >
-                <XMarkIcon className="h-6 w-6" />
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            <div className="mb-4">
-              <p className="text-gray-600 text-sm">
-                Select the products that should have this certification. You can select multiple products.
+            <p className="text-on-surface-variant text-[13px] mb-5">
+              Select the products that should have this certification.
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+              {products.map((product) => {
+                const checked = selectedProducts.includes(product.id);
+                return (
+                  <button
+                    type="button"
+                    key={product.id}
+                    onClick={() => toggleProductSelection(product.id)}
+                    className={`text-left rounded-xl p-3 border-2 transition-all ${
+                      checked
+                        ? 'border-primary-container bg-primary-container/10'
+                        : 'border-surface-container hover:border-outline-variant'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${
+                          checked
+                            ? 'bg-primary-container border-primary-container'
+                            : 'border-outline-variant'
+                        }`}
+                      >
+                        {checked && (
+                          <span className="material-symbols-outlined text-[14px] text-on-primary-fixed">
+                            check
+                          </span>
+                        )}
+                      </div>
+                      <div className="w-10 h-10 rounded-lg bg-surface-container-low border border-outline-variant/20 overflow-hidden flex-shrink-0">
+                        {product.image_url || product.image ? (
+                          <img
+                            src={product.image_url || product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-on-surface-variant/40">
+                            <span className="material-symbols-outlined text-[18px]">image</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-bold text-on-surface truncate">{product.name}</p>
+                        <p className="text-[11px] text-on-surface-variant/60 truncate font-mono">
+                          {product.model || product.sku || '—'}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-between gap-4 p-4 bg-surface-container-low rounded-xl mb-5">
+              <p className="text-[13px] text-on-surface">
+                <span className="font-bold">{selectedProducts.length}</span> product
+                {selectedProducts.length !== 1 ? 's' : ''} selected
               </p>
             </div>
 
-            {/* Products Grid */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                    selectedProducts.includes(product.id)
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => toggleProductSelection(product.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    {/* Checkbox */}
-                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                      selectedProducts.includes(product.id)
-                        ? 'bg-green-500 border-green-500'
-                        : 'border-gray-300'
-                    }`}>
-                      {selectedProducts.includes(product.id) && (
-                        <CheckIcon className="h-3 w-3 text-white" />
-                      )}
-                    </div>
-
-                    {/* Product Image */}
-                    <div className="w-12 h-12 flex-shrink-0">
-                      {product.image_url || product.image ? (
-                        <img
-                          src={product.image_url || product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                          <PhotoIcon className="h-6 w-6 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Product Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {product.name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        Model: {product.model || product.sku || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Selection Summary */}
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">
-                <strong>{selectedProducts.length}</strong> product{selectedProducts.length !== 1 ? 's' : ''} selected
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowProductModal(false)}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-surface-container">
+              <AdminButton type="button" variant="secondary" onClick={() => setShowProductModal(false)}>
                 Cancel
-              </button>
-              <button
+              </AdminButton>
+              <AdminButton
+                type="button"
+                variant="primary"
+                icon="save"
                 onClick={handleSaveProductAssignments}
-                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-                disabled={!selectedProducts.length}
               >
-                Save Product Assignments
-              </button>
+                Save Assignments
+              </AdminButton>
             </div>
-          </div>
+          </AdminCard>
         </div>
       )}
     </div>

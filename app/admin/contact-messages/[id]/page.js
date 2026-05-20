@@ -304,32 +304,36 @@ export default function ContactMessageDetailsPage() {
   const statusBadge = getStatusBadge(message.status);
 
   return (
-    <div>
+    <div className="admin-legacy">
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
           <Link
             href="/admin/contact-messages"
             style={{
-              color: '#3b82f6',
+              color: 'var(--color-on-surface-variant)',
               textDecoration: 'none',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.375rem',
+              fontSize: '13px',
+              fontWeight: 600,
             }}
           >
-            ← Back to Messages
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>arrow_back</span>
+            Back to Messages
           </Link>
         </div>
-        <h1 style={{ 
-          fontSize: '2rem', 
-          fontWeight: 'bold', 
-          color: '#111827', 
-          margin: '0 0 0.5rem 0' 
+        <h1 style={{
+          fontSize: '2rem',
+          fontWeight: 700,
+          color: 'var(--color-on-surface)',
+          margin: '0 0 0.5rem 0',
+          letterSpacing: '-0.01em',
         }}>
           Contact Message Details
         </h1>
-        <p style={{ color: '#6b7280', margin: 0 }}>
+        <p style={{ color: 'var(--color-on-surface-variant)', margin: 0 }}>
           Message from {message.name} • {formatDate(message.created_at)}
         </p>
       </div>

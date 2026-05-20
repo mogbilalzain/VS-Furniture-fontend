@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { materialsAPI } from '../../../lib/api';
 import { authStorage } from '../../../lib/localStorage-utils';
+import { PageHeader, AdminButton } from '../../../components/admin/ui';
 
 export default function MaterialsAdmin() {
   const router = useRouter();
@@ -266,39 +267,29 @@ export default function MaterialsAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Materials</h1>
-              <p className="mt-2 text-sm text-gray-600">
-                Manage individual materials with colors and images (M030, F010, L027, etc.)
-              </p>
-            </div>
-            <button
-              onClick={handleAdd}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              disabled={groups.length === 0}
-            >
-              Add New Material
-            </button>
-          </div>
-          
-          {groups.length === 0 && (
-            <div className="mt-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-              <p>Please create at least one material group before adding materials.</p>
-            </div>
-          )}
-        </div>
-      </div>
+    <div className="admin-legacy space-y-6">
+      <PageHeader
+        title="Materials"
+        description="Manage individual materials with colors and images (M030, F010, L027, etc.)"
+        actions={
+          <AdminButton variant="primary" size="lg" icon="add" onClick={handleAdd} disabled={groups.length === 0}>
+            Add New Material
+          </AdminButton>
+        }
+      />
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      {groups.length === 0 && (
+        <div className="px-5 py-3 rounded-2xl bg-primary-fixed/40 border border-primary-fixed-dim/50 text-on-primary-fixed-variant flex items-center gap-3">
+          <span className="material-symbols-outlined">warning</span>
+          Please create at least one material group before adding materials.
+        </div>
+      )}
+
+      <div className="px-0">
+        <div className="px-0 py-0 sm:px-0">
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-error-container border border-error/30 text-on-error-container mb-4">
+              <span className="material-symbols-outlined">error</span>
               {error}
             </div>
           )}

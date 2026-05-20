@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '../../../lib/auth-context'
 import { authStorage } from '../../../lib/localStorage-utils'
-import { 
-  useDashboardStats, 
-  useDashboardContentAnalytics, 
-  useDashboardChartsData 
+import {
+  useDashboardStats,
+  useDashboardContentAnalytics,
+  useDashboardChartsData,
 } from '../../../lib/hooks/useDashboard'
 import {
   MonthlyActivityChart,
@@ -19,6 +19,19 @@ import {
 } from '../../../components/admin/DashboardCharts'
 import QuickActions from '../../../components/admin/QuickActions'
 import RealTimeUpdates from '../../../components/admin/RealTimeUpdates'
+import {
+  AdminCard,
+  StatCard,
+  AdminButton,
+  AdminBadge,
+  PageHeader,
+} from '../../../components/admin/ui'
+
+const TABS = [
+  { id: 'overview', label: 'Overview', icon: 'dashboard' },
+  { id: 'analytics', label: 'Analytics', icon: 'monitoring' },
+  { id: 'actions', label: 'Quick Actions', icon: 'bolt' },
+]
 
 const DashboardPage = () => {
   const router = useRouter()
@@ -26,393 +39,431 @@ const DashboardPage = () => {
   const { data: dashboardData, loading: statsLoading, error: statsError } = useDashboardStats()
   const { data: analyticsData, loading: analyticsLoading } = useDashboardContentAnalytics()
   const { data: chartsData, loading: chartsLoading } = useDashboardChartsData()
-  
+
   const [activeTab, setActiveTab] = useState('overview')
   const [liveStats, setLiveStats] = useState(null)
   const [liveActivity, setLiveActivity] = useState([])
 
   useEffect(() => {
-    // Check if user is logged in and is admin using new system
     if (!authStorage.isAuthenticatedAdmin()) {
-      console.log('❌ Dashboard page - Not authenticated admin, redirecting...');
-      router.replace('/admin/login');
-    } else {
-      console.log('✅ Dashboard page - User is authenticated admin');
+      router.replace('/admin/login')
     }
   }, [router])
 
-  // Handle real-time updates
-  const handleStatsUpdate = (newStats) => {
-    setLiveStats(newStats)
-  }
+  const handleStatsUpdate = (newStats) => setLiveStats(newStats)
+  const handleNewActivity = (newActivity) => setLiveActivity(newActivity)
 
-  const handleNewActivity = (newActivity) => {
-    setLiveActivity(newActivity)
-  }
-
-  // Use live stats if available, otherwise use initial data
   const currentStats = liveStats || dashboardData?.data
 
-  // Generate new comprehensive stats
-  const stats = (currentStats || dashboardData?.data) ? [
-    {
-      icon: 'fas fa-box',
-      number: currentStats?.totalProducts?.toString() || '0',
-      label: 'Total Products',
-      color: 'rgba(59, 130, 246, 0.1)',
-      iconColor: '#3b82f6',
-      change: '+12%',
-      changeType: 'positive'
-    },
-    {
-      icon: 'fas fa-folder',
-      number: currentStats?.totalCategories?.toString() || '0',
-      label: 'Categories',
-      color: 'rgba(16, 185, 129, 0.1)',
-      iconColor: '#10b981',
-      change: '+3%',
-      changeType: 'positive'
-    },
-    {
-      icon: 'fas fa-envelope',
-      number: currentStats?.totalMessages?.toString() || '0',
-      label: 'Contact Messages',
-      color: 'rgba(139, 92, 246, 0.1)',
-      iconColor: '#8b5cf6',
-      change: '+8%',
-      changeType: 'positive'
-    },
-    {
-      icon: 'fas fa-certificate',
-      number: currentStats?.totalCertifications?.toString() || '0',
-      label: 'Certifications',
-      color: 'rgba(245, 158, 11, 0.1)',
-      iconColor: '#f59e0b',
-      change: '+2%',
-      changeType: 'positive'
-    },
-    {
-      icon: 'fas fa-lightbulb',
-      number: currentStats?.totalSolutions?.toString() || '0',
-      label: 'Solutions',
-      color: 'rgba(239, 68, 68, 0.1)',
-      iconColor: '#ef4444',
-      change: '+5%',
-      changeType: 'positive'
-    },
-    {
-      icon: 'fas fa-palette',
-      number: currentStats?.totalMaterials?.toString() || '0',
-      label: 'Materials',
-      color: 'rgba(6, 182, 212, 0.1)',
-      iconColor: '#06b6d4',
-      change: '+1%',
-      changeType: 'positive'
-    },
-    {
-      icon: 'fas fa-users-cog',
-      number: currentStats?.adminUsers?.toString() || '0',
-      label: 'Admin Users',
-      color: 'rgba(132, 204, 22, 0.1)',
-      iconColor: '#84cc16',
-      change: '0%',
-      changeType: 'neutral'
-    },
-    {
-      icon: 'fas fa-heartbeat',
-      number: currentStats?.systemHealth?.status === 'healthy' ? '✅' : '⚠️',
-      label: 'System Health',
-      color: currentStats?.systemHealth?.status === 'healthy' 
-        ? 'rgba(16, 185, 129, 0.1)' 
-        : 'rgba(245, 158, 11, 0.1)',
-      iconColor: currentStats?.systemHealth?.status === 'healthy' ? '#10b981' : '#f59e0b',
-      change: currentStats?.systemHealth?.status || 'Unknown',
-      changeType: currentStats?.systemHealth?.status === 'healthy' ? 'positive' : 'warning'
-    }
-  ] : []
+  const stats = (currentStats || dashboardData?.data)
+    ? [
+        {
+          icon: 'inventory_2',
+          value: currentStats?.totalProducts?.toString() || '0',
+          label: 'Total Products',
+          change: '+12%',
+          changeType: 'positive',
+        },
+        {
+          icon: 'category',
+          value: currentStats?.totalCategories?.toString() || '0',
+          label: 'Categories',
+          change: '+3%',
+          changeType: 'positive',
+        },
+        {
+          icon: 'mail',
+          value: currentStats?.totalMessages?.toString() || '0',
+          label: 'Contact Messages',
+          change: '+8%',
+          changeType: 'positive',
+        },
+        {
+          icon: 'workspace_premium',
+          value: currentStats?.totalCertifications?.toString() || '0',
+          label: 'Certifications',
+          change: '+2%',
+          changeType: 'positive',
+        },
+        {
+          icon: 'lightbulb',
+          value: currentStats?.totalSolutions?.toString() || '0',
+          label: 'Solutions',
+          change: '+5%',
+          changeType: 'positive',
+        },
+        {
+          icon: 'palette',
+          value: currentStats?.totalMaterials?.toString() || '0',
+          label: 'Materials',
+          change: '+1%',
+          changeType: 'positive',
+        },
+        {
+          icon: 'admin_panel_settings',
+          value: currentStats?.adminUsers?.toString() || '0',
+          label: 'Admin Users',
+          change: 'Stable',
+          changeType: 'neutral',
+        },
+        {
+          icon: 'monitor_heart',
+          value:
+            currentStats?.systemHealth?.status === 'healthy' ? 'OK' : '!',
+          label: 'System Health',
+          change: currentStats?.systemHealth?.status || 'Unknown',
+          changeType:
+            currentStats?.systemHealth?.status === 'healthy'
+              ? 'positive'
+              : 'warning',
+        },
+      ]
+    : []
 
-  // Use recent data from API (with live updates)
-  const recentProducts = currentStats?.recentProducts?.slice(0, 5) || 
-    (dashboardData?.success ? (dashboardData.data.recentProducts || []).slice(0, 5) : [])
+  const recentProducts =
+    currentStats?.recentProducts?.slice(0, 5) ||
+    (dashboardData?.success
+      ? (dashboardData.data.recentProducts || []).slice(0, 5)
+      : [])
 
-  const recentMessages = currentStats?.recentMessages?.slice(0, 5) || 
-    (dashboardData?.success ? (dashboardData.data.recentMessages || []).slice(0, 5) : [])
+  const recentMessages =
+    currentStats?.recentMessages?.slice(0, 5) ||
+    (dashboardData?.success
+      ? (dashboardData.data.recentMessages || []).slice(0, 5)
+      : [])
 
-  const recentActivity = liveActivity.length > 0 ? liveActivity : 
-    (currentStats?.recentActivity?.slice(0, 6) || 
-    (dashboardData?.success ? (dashboardData.data.recentActivity || []).slice(0, 6) : []))
+  const recentActivity =
+    liveActivity.length > 0
+      ? liveActivity
+      : currentStats?.recentActivity?.slice(0, 6) ||
+        (dashboardData?.success
+          ? (dashboardData.data.recentActivity || []).slice(0, 6)
+          : [])
 
-  // Show loading state
   if (statsLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-gray-200 border-top-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading comprehensive dashboard...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="w-12 h-12 rounded-full border-4 border-surface-container border-t-primary-container animate-spin" />
+        <p className="text-on-surface-variant text-body-md">
+          Loading dashboard…
+        </p>
       </div>
     )
   }
 
-  // Show error state
   if (statsError) {
     return (
-      <div className="p-8 text-center bg-red-50 border border-red-200 rounded-lg m-4">
-        <i className="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
-        <h3 className="text-xl font-semibold text-red-800 mb-2">Error Loading Dashboard</h3>
-        <p className="text-red-600">{statsError}</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+      <AdminCard className="text-center" padding="p-10">
+        <div className="mx-auto mb-4 w-14 h-14 rounded-2xl bg-error-container flex items-center justify-center">
+          <span className="material-symbols-outlined text-on-error-container text-[28px]">
+            error
+          </span>
+        </div>
+        <h3 className="text-headline-md font-bold text-on-surface mb-2">
+          Error loading dashboard
+        </h3>
+        <p className="text-on-surface-variant mb-6">{statsError}</p>
+        <AdminButton
+          onClick={() => window.location.reload()}
+          variant="primary"
+          icon="refresh"
         >
           Retry
-        </button>
-      </div>
+        </AdminButton>
+      </AdminCard>
     )
   }
 
   return (
-    <div className="admin-dashboard space-y-6" style={{ fontFamily: "'Quasimoda', 'Inter', sans-serif" }}>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
-          <p className="text-gray-600">Welcome back! Here's what's happening with your system.</p>
-        </div>
-        <div className="flex space-x-2 mt-4 sm:mt-0">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'overview'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'analytics'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Analytics
-          </button>
-          <button
-            onClick={() => setActiveTab('actions')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'actions'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Quick Actions
-          </button>
-        </div>
-      </div>
+    <div className="space-y-8 lg:space-y-10">
+      <PageHeader
+        title="Dashboard Overview"
+        description="Real-time performance metrics and business intelligence."
+        actions={
+          <>
+            <AdminButton variant="secondary" icon="file_download" size="lg">
+              Export Report
+            </AdminButton>
+            <AdminButton
+              variant="primary"
+              icon="add"
+              size="lg"
+              href="/admin/products"
+            >
+              New Product
+            </AdminButton>
+          </>
+        }
+      />
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-3xl font-bold text-gray-900 mb-1">
-                  {stat.number}
-                </p>
-                <p className="text-gray-600 text-sm font-medium mb-2">
-                  {stat.label}
-                </p>
-                <div className="flex items-center">
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    stat.changeType === 'positive' 
-                      ? 'text-green-700 bg-green-100' 
-                      : stat.changeType === 'warning'
-                      ? 'text-yellow-700 bg-yellow-100'
-                      : 'text-gray-700 bg-gray-100'
-                  }`}>
-                    {stat.change}
-                  </span>
-                </div>
-              </div>
-              <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: stat.color }}
-              >
-                <i className={stat.icon} style={{ color: stat.iconColor, fontSize: '1.25rem' }}></i>
-              </div>
-            </div>
-          </div>
+      {/* Stats grid */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+        {stats.map((stat) => (
+          <StatCard
+            key={stat.label}
+            icon={stat.icon}
+            label={stat.label}
+            value={stat.value}
+            change={stat.change}
+            changeType={stat.changeType}
+          />
+        ))}
+      </section>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1 p-1 bg-surface-container rounded-xl w-fit">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 text-[13px] font-bold rounded-lg transition-all ${
+              activeTab === tab.id
+                ? 'bg-surface-container-lowest text-on-surface admin-shadow-md'
+                : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              {tab.icon}
+            </span>
+            {tab.label}
+          </button>
         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* Overview Tab */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
           {/* Recent Products */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Products</h3>
-              <Link href="/admin/products" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+          <AdminCard className="lg:col-span-4">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-headline-md font-bold text-on-surface">
+                Recent Products
+              </h3>
+              <Link
+                href="/admin/products"
+                className="text-[13px] font-bold text-primary hover:underline flex items-center gap-1"
+              >
                 View All
+                <span className="material-symbols-outlined text-[16px]">
+                  chevron_right
+                </span>
               </Link>
             </div>
             <div className="space-y-3">
-              {recentProducts.map((product, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 text-sm">{product.name}</p>
-                    <p className="text-gray-500 text-xs">{product.category} • {product.date}</p>
+              {recentProducts.length === 0 ? (
+                <p className="text-on-surface-variant/60 text-sm py-4 text-center">
+                  No recent products
+                </p>
+              ) : (
+                recentProducts.map((product, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl hover:bg-surface-container transition-colors"
+                  >
+                    <div className="flex-1 min-w-0 pr-3">
+                      <p className="font-bold text-on-surface text-[14px] truncate">
+                        {product.name}
+                      </p>
+                      <p className="text-on-surface-variant/60 text-[12px] truncate">
+                        {product.category} • {product.date}
+                      </p>
+                    </div>
+                    <AdminBadge
+                      tone={product.status === 'active' ? 'active' : 'pending'}
+                      dot
+                    >
+                      {product.status}
+                    </AdminBadge>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    product.status === 'active' 
-                      ? 'text-green-700 bg-green-100' 
-                      : 'text-yellow-700 bg-yellow-100'
-                  }`}>
-                    {product.status}
-                  </span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-          </div>
+          </AdminCard>
 
           {/* Recent Messages */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Messages</h3>
-              <Link href="/admin/contact-messages" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+          <AdminCard className="lg:col-span-4">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-headline-md font-bold text-on-surface">
+                Recent Messages
+              </h3>
+              <Link
+                href="/admin/contact-messages"
+                className="text-[13px] font-bold text-primary hover:underline flex items-center gap-1"
+              >
                 View All
+                <span className="material-symbols-outlined text-[16px]">
+                  chevron_right
+                </span>
               </Link>
             </div>
             <div className="space-y-3">
-              {recentMessages.map((message, index) => (
-                <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="font-medium text-gray-900 text-sm">{message.from}</p>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      message.status === 'unread' 
-                        ? 'text-blue-700 bg-blue-100' 
-                        : message.status === 'read'
-                        ? 'text-green-700 bg-green-100'
-                        : 'text-purple-700 bg-purple-100'
-                    }`}>
-                      {message.status}
-                    </span>
+              {recentMessages.length === 0 ? (
+                <p className="text-on-surface-variant/60 text-sm py-4 text-center">
+                  No recent messages
+                </p>
+              ) : (
+                recentMessages.map((message, index) => (
+                  <div
+                    key={index}
+                    className="p-3 bg-surface-container-low rounded-xl hover:bg-surface-container transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-1 gap-2">
+                      <p className="font-bold text-on-surface text-[14px] truncate flex-1">
+                        {message.from}
+                      </p>
+                      <AdminBadge
+                        tone={
+                          message.status === 'unread'
+                            ? 'dark'
+                            : message.status === 'read'
+                            ? 'active'
+                            : 'info'
+                        }
+                      >
+                        {message.status}
+                      </AdminBadge>
+                    </div>
+                    <p className="text-on-surface-variant text-[13px] truncate">
+                      {message.subject}
+                    </p>
+                    <p className="text-on-surface-variant/50 text-[11px] mt-1">
+                      {message.date}
+                    </p>
                   </div>
-                  <p className="text-gray-600 text-xs mb-1">{message.subject}</p>
-                  <p className="text-gray-500 text-xs">{message.date}</p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-          </div>
+          </AdminCard>
 
           {/* Recent Activity */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+          <AdminCard className="lg:col-span-4">
+            <h3 className="text-headline-md font-bold text-on-surface mb-5">
+              Recent Activity
+            </h3>
             <div className="space-y-3">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <i className={activity.icon} style={{ fontSize: '0.75rem', color: '#3b82f6' }}></i>
+              {recentActivity.length === 0 ? (
+                <p className="text-on-surface-variant/60 text-sm py-4 text-center">
+                  No recent activity
+                </p>
+              ) : (
+                recentActivity.map((activity, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 p-3 bg-surface-container-low rounded-xl"
+                  >
+                    <div className="w-9 h-9 bg-primary-container/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <i
+                        className={activity.icon}
+                        style={{ fontSize: '0.875rem', color: '#705d00' }}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium text-on-surface">
+                        {activity.description}
+                      </p>
+                      <p className="text-[11px] text-on-surface-variant/60 mt-0.5">
+                        {new Date(activity.date).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{activity.description}</p>
-                    <p className="text-xs text-gray-500">{new Date(activity.date).toLocaleString()}</p>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-          </div>
-        </div>
+          </AdminCard>
+        </section>
       )}
 
+      {/* Analytics Tab */}
       {activeTab === 'analytics' && (
-        <div className="space-y-6">
-          {/* System Health */}
+        <section className="space-y-gutter">
           {dashboardData?.data?.systemHealth && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <SystemHealthChart data={dashboardData.data.systemHealth} loading={statsLoading} />
-            </div>
+            <AdminCard>
+              <SystemHealthChart
+                data={dashboardData.data.systemHealth}
+                loading={statsLoading}
+              />
+            </AdminCard>
           )}
 
-          {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Monthly Activity Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <MonthlyActivityChart 
-                data={chartsData?.data?.monthlyActivity} 
-                loading={chartsLoading} 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+            <AdminCard>
+              <MonthlyActivityChart
+                data={chartsData?.data?.monthlyActivity}
+                loading={chartsLoading}
               />
-            </div>
+            </AdminCard>
 
-            {/* Category Distribution Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <CategoryDistributionChart 
-                data={chartsData?.data?.categoryDistribution} 
-                loading={chartsLoading} 
+            <AdminCard>
+              <CategoryDistributionChart
+                data={chartsData?.data?.categoryDistribution}
+                loading={chartsLoading}
               />
-            </div>
+            </AdminCard>
 
-            {/* Content Growth Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <ContentGrowthChart 
-                data={chartsData?.data?.contentGrowth} 
-                loading={chartsLoading} 
+            <AdminCard>
+              <ContentGrowthChart
+                data={chartsData?.data?.contentGrowth}
+                loading={chartsLoading}
               />
-            </div>
+            </AdminCard>
 
-            {/* Messages Trend Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <MessagesTrendChart 
-                data={chartsData?.data?.messagesTrend} 
-                loading={chartsLoading} 
+            <AdminCard>
+              <MessagesTrendChart
+                data={chartsData?.data?.messagesTrend}
+                loading={chartsLoading}
               />
-            </div>
+            </AdminCard>
           </div>
 
-          {/* Content Analytics */}
           {analyticsData?.success && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Content Analytics</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-red-50 rounded-lg">
-                  <div className="text-2xl font-bold text-red-600">
+            <AdminCard>
+              <h3 className="text-headline-md font-bold text-on-surface mb-5">
+                Content Analytics
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-5 bg-error-container/40 rounded-2xl">
+                  <p className="text-[12px] font-bold uppercase tracking-wider text-on-error-container/80">
+                    Products without Images
+                  </p>
+                  <p className="text-3xl font-bold text-on-error-container mt-2">
                     {analyticsData.data.productsWithoutImages}
-                  </div>
-                  <div className="text-sm text-red-700">Products without Images</div>
+                  </p>
                 </div>
-                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                  <div className="text-2xl font-bold text-yellow-600">
+                <div className="p-5 bg-[#fff4cf] rounded-2xl">
+                  <p className="text-[12px] font-bold uppercase tracking-wider text-[#7a5d00]/80">
+                    Empty Categories
+                  </p>
+                  <p className="text-3xl font-bold text-[#7a5d00] mt-2">
                     {analyticsData.data.emptyCategories}
-                  </div>
-                  <div className="text-sm text-yellow-700">Empty Categories</div>
+                  </p>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
+                <div className="p-5 bg-secondary-container rounded-2xl">
+                  <p className="text-[12px] font-bold uppercase tracking-wider text-on-secondary-container/80">
+                    Solutions without Products
+                  </p>
+                  <p className="text-3xl font-bold text-on-secondary-container mt-2">
                     {analyticsData.data.solutionsWithoutProducts}
-                  </div>
-                  <div className="text-sm text-purple-700">Solutions without Products</div>
+                  </p>
                 </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
+                <div className="p-5 bg-primary-container/30 rounded-2xl">
+                  <p className="text-[12px] font-bold uppercase tracking-wider text-on-primary-fixed/80">
+                    Popular Categories
+                  </p>
+                  <p className="text-3xl font-bold text-on-primary-fixed mt-2">
                     {analyticsData.data.popularCategories?.length || 0}
-                  </div>
-                  <div className="text-sm text-green-700">Popular Categories</div>
+                  </p>
                 </div>
               </div>
-            </div>
+            </AdminCard>
           )}
-        </div>
+        </section>
       )}
 
-      {activeTab === 'actions' && (
-        <QuickActions />
-      )}
+      {/* Quick Actions Tab */}
+      {activeTab === 'actions' && <QuickActions />}
 
-      {/* Real-time Updates Component */}
-      <RealTimeUpdates 
+      <RealTimeUpdates
         onStatsUpdate={handleStatsUpdate}
         onNewActivity={handleNewActivity}
       />

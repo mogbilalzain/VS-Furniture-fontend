@@ -4,11 +4,20 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authStorage } from '../../../lib/localStorage-utils';
 import { productFilesAPI, productsAPI } from '../../../lib/api';
+import {
+  AdminCard,
+  AdminButton,
+  AdminBadge,
+  AdminInput,
+  AdminSelect,
+  PageHeader,
+  EmptyState,
+  StatCard,
+} from '../../../components/admin/ui';
 
 const ProductFilesPage = () => {
   const router = useRouter();
-  
-  // State management
+
   const [files, setFiles] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,22 +35,17 @@ const ProductFilesPage = () => {
     file_category: 'manual',
     is_active: true,
     is_featured: false,
-    sort_order: 0
+    sort_order: 0,
   });
   const [formErrors, setFormErrors] = useState({});
   const [selectedFileForUpload, setSelectedFileForUpload] = useState(null);
 
-  // Authentication check
   useEffect(() => {
     if (!authStorage.isAuthenticatedAdmin()) {
-      console.log('❌ Product Files page - Not authenticated admin, redirecting...');
       router.replace('/admin/login');
-    } else {
-      console.log('✅ Product Files page - User is authenticated admin');
     }
   }, [router]);
 
-  // Load data
   useEffect(() => {
     loadData();
   }, []);
@@ -50,20 +54,14 @@ const ProductFilesPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Load products and files in parallel
+
       const [productsResponse, filesResponse] = await Promise.all([
         productsAPI.getAdminAll(),
-        productFilesAPI.getAll()
+        productFilesAPI.getAll(),
       ]);
 
-      if (productsResponse.success) {
-        setProducts(productsResponse.data || []);
-      }
-
-      if (filesResponse.success) {
-        setFiles(filesResponse.data || []);
-      }
+      if (productsResponse.success) setProducts(productsResponse.data || []);
+      if (filesResponse.success) setFiles(filesResponse.data || []);
     } catch (error) {
       console.error('Error loading data:', error);
       setError('Failed to load data');
@@ -74,65 +72,52 @@ const ProductFilesPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : (type === 'number' ? parseInt(value) || 0 : value)
+      [name]:
+        type === 'checkbox'
+          ? checked
+          : type === 'number'
+          ? parseInt(value) || 0
+          : value,
     }));
-    
-    // Clear error when user starts typing
+
     if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setFormErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type (PDF only)
       if (file.type !== 'application/pdf') {
         alert('Only PDF files are allowed');
         e.target.value = '';
         return;
       }
-      
-      // Validate file size (max 10MB)
+
       if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
         e.target.value = '';
         return;
       }
-      
+
       setSelectedFileForUpload(file);
-      
-      // Auto-fill display name from file name
+
       if (!formData.display_name) {
         const fileName = file.name.replace('.pdf', '');
-        setFormData(prev => ({
-          ...prev,
-          display_name: fileName
-        }));
+        setFormData((prev) => ({ ...prev, display_name: fileName }));
       }
     }
   };
 
   const validateForm = () => {
     const errors = {};
-    
-    if (!formData.product_id) {
-      errors.product_id = 'Product is required';
-    }
-    
-    if (!formData.display_name.trim()) {
-      errors.display_name = 'Display name is required';
-    }
-    
-    if (!selectedFile && !selectedFileForUpload) {
-      errors.file = 'File is required';
-    }
-    
+
+    if (!formData.product_id) errors.product_id = 'Product is required';
+    if (!formData.display_name.trim()) errors.display_name = 'Display name is required';
+    if (!selectedFile && !selectedFileForUpload) errors.file = 'File is required';
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -145,7 +130,7 @@ const ProductFilesPage = () => {
       file_category: 'manual',
       is_active: true,
       is_featured: false,
-      sort_order: 0
+      sort_order: 0,
     });
     setFormErrors({});
     setSelectedFile(null);
@@ -167,32 +152,23 @@ const ProductFilesPage = () => {
       file_category: file.file_category || 'manual',
       is_active: file.is_active !== undefined ? file.is_active : true,
       is_featured: file.is_featured || false,
-      sort_order: file.sort_order || 0
+      sort_order: file.sort_order || 0,
     });
     setShowModal(true);
   };
 
   const handleSaveFile = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
+    if (!validateForm()) return;
+
     try {
       setModalLoading(true);
       setError(null);
 
       let response;
       if (selectedFile) {
-        // Update existing file
         response = await productFilesAPI.update(selectedFile.id, formData);
       } else {
-        // Create new file with upload
-        console.log('🔧 Preparing file upload...');
-        console.log('🔧 Selected file:', selectedFileForUpload);
-        console.log('🔧 Form data:', formData);
-        
         const uploadData = new FormData();
         uploadData.append('file', selectedFileForUpload);
         uploadData.append('product_id', formData.product_id);
@@ -202,40 +178,22 @@ const ProductFilesPage = () => {
         uploadData.append('is_active', formData.is_active ? '1' : '0');
         uploadData.append('is_featured', formData.is_featured ? '1' : '0');
         uploadData.append('sort_order', formData.sort_order.toString());
-        
-        console.log('🔧 Upload FormData entries:');
-        for (let [key, value] of uploadData.entries()) {
-          console.log(`  ${key}:`, value instanceof File ? `File(${value.name}, ${value.size} bytes)` : value);
-        }
-        
+
         response = await productFilesAPI.upload(uploadData, (progress) => {
           setUploadProgress(progress);
         });
       }
 
       if (response.success) {
-        await loadData(); // Reload data
+        await loadData();
         setShowModal(false);
         resetForm();
-        
-        const successMessage = selectedFile 
-          ? '✅ File updated successfully!' 
-          : '🎉 File uploaded successfully!';
-        alert(successMessage);
       } else {
-        if (response.errors) {
-          setFormErrors(response.errors);
-        }
+        if (response.errors) setFormErrors(response.errors);
         setError(response.message || 'Failed to save file');
       }
     } catch (error) {
-      console.error('❌ Error saving file:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        status: error.status,
-        fullResponse: error.fullResponse
-      });
-      
+      console.error('Error saving file:', error);
       if (error.fullResponse && error.fullResponse.message) {
         setError(error.fullResponse.message);
       } else if (error.message) {
@@ -250,17 +208,15 @@ const ProductFilesPage = () => {
   };
 
   const handleDeleteFile = async (fileId) => {
-    if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to delete this file? This action cannot be undone.'))
       return;
-    }
 
     try {
       setLoading(true);
       const response = await productFilesAPI.delete(fileId);
-      
+
       if (response.success) {
         await loadData();
-        alert('✅ File deleted successfully!');
       } else {
         setError(response.message || 'Failed to delete file');
       }
@@ -275,8 +231,7 @@ const ProductFilesPage = () => {
   const handleDownloadFile = async (fileId, fileName) => {
     try {
       const response = await productFilesAPI.download(fileId);
-      
-      // Create download link
+
       const url = window.URL.createObjectURL(new Blob([response]));
       const link = document.createElement('a');
       link.href = url;
@@ -285,8 +240,7 @@ const ProductFilesPage = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
-      // Reload data to update download count
+
       await loadData();
     } catch (error) {
       console.error('Error downloading file:', error);
@@ -294,28 +248,25 @@ const ProductFilesPage = () => {
     }
   };
 
-  // Filter files based on product and search
-  const filteredFiles = files.filter(file => {
+  const filteredFiles = files.filter((file) => {
     const matchesProduct = selectedProduct === 'all' || file.product_id == selectedProduct;
-    const matchesSearch = file.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         file.file_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (file.description && file.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch =
+      file.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      file.file_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (file.description && file.description.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesProduct && matchesSearch;
   });
 
-  // Group files by product
   const groupedFiles = filteredFiles.reduce((acc, file) => {
     const productId = file.product_id || 'uncategorized';
-    if (!acc[productId]) {
-      acc[productId] = [];
-    }
+    if (!acc[productId]) acc[productId] = [];
     acc[productId].push(file);
     return acc;
   }, {});
 
   const getProductName = (productId) => {
     if (productId === 'uncategorized') return 'Uncategorized';
-    const product = products.find(p => p.id == productId);
+    const product = products.find((p) => p.id == productId);
     return product ? product.name : `Product ${productId}`;
   };
 
@@ -329,419 +280,226 @@ const ProductFilesPage = () => {
 
   if (loading && files.length === 0) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '50vh'
-      }}>
-        <div style={{
-          fontSize: '1.125rem',
-          color: '#6b7280'
-        }}>
-          Loading product files...
-        </div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 rounded-full border-4 border-surface-container border-t-primary-container animate-spin" />
       </div>
     );
   }
 
-  return (
-    <div className="admin-product-files" style={{ fontFamily: "'Quasimoda', 'Inter', sans-serif" }}>
-      {/* Page Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '1.5rem'
-      }}>
-        <div>
-          <h1 style={{
-            fontSize: '1.875rem',
-            fontWeight: 700,
-            color: '#111827',
-            margin: 0
-          }}>Product Files Management</h1>
-          <p style={{
-            color: '#6b7280',
-            margin: '0.25rem 0 0 0'
-          }}>Manage PDF files for products</p>
-        </div>
-        <button
-          onClick={handleAddFile}
-          style={{
-            background: '#FFD700',
-            color: '#2c2c2c',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.75rem 1.5rem',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = '#e6c200';
-            e.target.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = '#FFD700';
-            e.target.style.transform = 'translateY(0)';
-          }}
-        >
-          <i className="fas fa-upload"></i>
-          Upload File
-        </button>
-      </div>
+  const totalDownloads = files.reduce((sum, f) => sum + (f.download_count || 0), 0);
+  const featuredCount = files.filter((f) => f.is_featured).length;
 
-      {/* Error Message */}
+  const productOptions = [
+    { value: 'all', label: 'All Products' },
+    ...products.map((p) => ({ value: p.id, label: p.name })),
+  ];
+
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Product Files"
+        description="Manage PDF files and downloadable resources for products."
+        actions={
+          <AdminButton variant="primary" size="lg" icon="upload" onClick={handleAddFile}>
+            Upload File
+          </AdminButton>
+        }
+      />
+
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-gutter">
+        <StatCard
+          icon="description"
+          label="Total Files"
+          value={files.length.toString()}
+          change="Catalog"
+          changeType="neutral"
+        />
+        <StatCard
+          icon="download"
+          label="Total Downloads"
+          value={totalDownloads.toString()}
+          change="All time"
+          changeType="positive"
+        />
+        <StatCard
+          icon="star"
+          label="Featured"
+          value={featuredCount.toString()}
+          change="Highlighted"
+          changeType="warning"
+        />
+      </section>
+
       {error && (
-        <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          color: '#dc2626',
-          padding: '0.75rem',
-          borderRadius: '8px',
-          marginBottom: '1rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}>
-          <i className="fas fa-exclamation-triangle"></i>
-          {error}
+        <div className="flex items-start justify-between gap-4 px-5 py-3 rounded-2xl bg-error-container border border-error/30 text-on-error-container">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined mt-0.5">error</span>
+            <div>{error}</div>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-on-error-container/70 hover:text-on-error-container"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
         </div>
       )}
 
       {/* Filters */}
-      <div style={{
-        background: 'white',
-        padding: '1.5rem',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        marginBottom: '1.5rem'
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '1rem',
-          alignItems: 'end'
-        }}>
-          {/* Product Filter */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}>
-              Filter by Product
-            </label>
-            <select
-              value={selectedProduct}
-              onChange={(e) => setSelectedProduct(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '0.875rem'
-              }}
-            >
-              <option value="all">All Products</option>
-              {products.map(product => (
-                <option key={product.id} value={product.id}>
-                  {product.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Search */}
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#374151',
-              marginBottom: '0.5rem'
-            }}>
-              Search Files
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name or description..."
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '0.875rem'
-              }}
-            />
-          </div>
+      <AdminCard padding="p-5 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+          <AdminSelect
+            label="Filter by Product"
+            value={selectedProduct}
+            onChange={(e) => setSelectedProduct(e.target.value)}
+            options={productOptions}
+          />
+          <AdminInput
+            label="Search Files"
+            icon="search"
+            placeholder="Search by name or description…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-      </div>
+      </AdminCard>
 
       {/* Files List */}
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden'
-      }}>
-        {Object.keys(groupedFiles).length === 0 ? (
-          <div style={{
-            padding: '3rem',
-            textAlign: 'center',
-            color: '#6b7280'
-          }}>
-            <i className="fas fa-file-pdf" style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }}></i>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 500, marginBottom: '0.5rem' }}>
-              No files found
-            </h3>
-            <p style={{ fontSize: '0.875rem' }}>
-              {searchTerm || selectedProduct !== 'all' 
-                ? 'Try adjusting your filters or search terms'
-                : 'Start by uploading your first file'
-              }
-            </p>
-          </div>
-        ) : (
-          Object.keys(groupedFiles).map(productId => (
-            <div key={productId} style={{ borderBottom: '1px solid #e5e7eb' }}>
-              {/* Product Header */}
-              <div style={{
-                background: '#f9fafb',
-                padding: '1rem 1.5rem',
-                borderBottom: '1px solid #e5e7eb'
-              }}>
-                <h3 style={{
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  color: '#111827',
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  <i className="fas fa-cube"></i>
+      {Object.keys(groupedFiles).length === 0 ? (
+        <EmptyState
+          icon="description"
+          title="No files found"
+          description={
+            searchTerm || selectedProduct !== 'all'
+              ? 'Try adjusting your filters or search terms'
+              : 'Start by uploading your first file'
+          }
+          action={
+            <AdminButton variant="primary" icon="upload" onClick={handleAddFile}>
+              Upload File
+            </AdminButton>
+          }
+        />
+      ) : (
+        <AdminCard padding="p-0" className="overflow-hidden">
+          {Object.keys(groupedFiles).map((productId, idx) => (
+            <div
+              key={productId}
+              className={idx > 0 ? 'border-t border-surface-container' : ''}
+            >
+              <div className="bg-surface-container-low px-6 py-4 flex items-center gap-3 border-b border-surface-container">
+                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                  inventory_2
+                </span>
+                <h3 className="text-[14px] font-bold text-on-surface tracking-tight">
                   {getProductName(productId)}
-                  <span style={{
-                    background: '#e5e7eb',
-                    color: '#6b7280',
-                    padding: '0.125rem 0.5rem',
-                    borderRadius: '9999px',
-                    fontSize: '0.75rem'
-                  }}>
-                    {groupedFiles[productId].length} files
-                  </span>
                 </h3>
+                <AdminBadge tone="neutral">
+                  {groupedFiles[productId].length} files
+                </AdminBadge>
               </div>
-
-              {/* Files in this product */}
-              <div>
+              <div className="divide-y divide-surface-container">
                 {groupedFiles[productId]
                   .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-                  .map(file => (
-                  <div
-                    key={file.id}
-                    style={{
-                      padding: '1.5rem',
-                      borderBottom: '1px solid #f3f4f6',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'start'
-                    }}
-                  >
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'start', gap: '1rem' }}>
-                      {/* File Icon */}
-                      <div style={{
-                        width: '3rem',
-                        height: '3rem',
-                        background: '#dc2626',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '1.25rem'
-                      }}>
-                        <i className="fas fa-file-pdf"></i>
-                      </div>
-                      
-                      {/* File Info */}
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                          <h4 style={{
-                            fontSize: '1rem',
-                            fontWeight: 600,
-                            color: '#111827',
-                            margin: 0
-                          }}>
-                            {file.display_name}
-                          </h4>
-                          <span style={{
-                            background: file.is_active ? '#dcfce7' : '#fef2f2',
-                            color: file.is_active ? '#166534' : '#dc2626',
-                            padding: '0.125rem 0.5rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem'
-                          }}>
-                            {file.is_active ? 'Active' : 'Inactive'}
+                  .map((file) => (
+                    <div
+                      key={file.id}
+                      className="px-6 py-4 flex items-start justify-between gap-4 hover:bg-surface-container-low/50 transition-colors"
+                    >
+                      <div className="flex items-start gap-4 flex-1 min-w-0">
+                        <div className="w-12 h-12 rounded-xl bg-error/10 text-error flex items-center justify-center flex-shrink-0">
+                          <span className="material-symbols-outlined text-[24px]">
+                            picture_as_pdf
                           </span>
-                          {file.is_featured && (
-                            <span style={{
-                              background: '#fef3c7',
-                              color: '#92400e',
-                              padding: '0.125rem 0.5rem',
-                              borderRadius: '9999px',
-                              fontSize: '0.75rem'
-                            }}>
-                              Featured
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <h4 className="text-[15px] font-bold text-on-surface tracking-tight">
+                              {file.display_name}
+                            </h4>
+                            <AdminBadge tone={file.is_active ? 'active' : 'pending'} dot>
+                              {file.is_active ? 'Active' : 'Inactive'}
+                            </AdminBadge>
+                            {file.is_featured && (
+                              <AdminBadge tone="warning">
+                                <span className="material-symbols-outlined text-[12px] mr-1">
+                                  star
+                                </span>
+                                Featured
+                              </AdminBadge>
+                            )}
+                            <AdminBadge tone="info">{file.file_category}</AdminBadge>
+                          </div>
+
+                          <div className="flex gap-4 text-[13px] text-on-surface-variant/80 flex-wrap mb-2">
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[14px]">
+                                description
+                              </span>
+                              {file.file_name}
                             </span>
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[14px]">
+                                scale
+                              </span>
+                              {formatFileSize(file.file_size)}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[14px]">
+                                download
+                              </span>
+                              {file.download_count || 0} downloads
+                            </span>
+                          </div>
+
+                          {file.description && (
+                            <p className="text-[13px] text-on-surface-variant">
+                              {file.description}
+                            </p>
                           )}
-                          <span style={{
-                            background: '#e0e7ff',
-                            color: '#3730a3',
-                            padding: '0.125rem 0.5rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem'
-                          }}>
-                            {file.file_category}
-                          </span>
                         </div>
-                        
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
-                          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                            <i className="fas fa-file" style={{ marginRight: '0.25rem' }}></i>
-                            {file.file_name}
+                      </div>
+
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => handleDownloadFile(file.id, file.file_name)}
+                          title="Download"
+                          className="w-9 h-9 rounded-lg hover:bg-primary-container/20 text-primary flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            download
                           </span>
-                          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                            <i className="fas fa-weight" style={{ marginRight: '0.25rem' }}></i>
-                            {formatFileSize(file.file_size)}
-                          </span>
-                          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                            <i className="fas fa-download" style={{ marginRight: '0.25rem' }}></i>
-                            {file.download_count || 0} downloads
-                          </span>
-                        </div>
-                        
-                        {file.description && (
-                          <p style={{
-                            fontSize: '0.875rem',
-                            color: '#6b7280',
-                            margin: 0
-                          }}>
-                            {file.description}
-                          </p>
-                        )}
+                        </button>
+                        <button
+                          onClick={() => handleEditFile(file)}
+                          title="Edit"
+                          className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteFile(file.id)}
+                          title="Delete"
+                          className="w-9 h-9 rounded-lg hover:bg-error-container text-error flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
                       </div>
                     </div>
-                    
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        onClick={() => handleDownloadFile(file.id, file.file_name)}
-                        style={{
-                          background: '#ecfdf5',
-                          color: '#059669',
-                          border: '1px solid #d1fae5',
-                          borderRadius: '6px',
-                          padding: '0.5rem',
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem'
-                        }}
-                        title="Download File"
-                      >
-                        <i className="fas fa-download"></i>
-                      </button>
-                      <button
-                        onClick={() => handleEditFile(file)}
-                        style={{
-                          background: '#eff6ff',
-                          color: '#2563eb',
-                          border: '1px solid #dbeafe',
-                          borderRadius: '6px',
-                          padding: '0.5rem',
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem'
-                        }}
-                        title="Edit File"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteFile(file.id)}
-                        style={{
-                          background: '#fef2f2',
-                          color: '#dc2626',
-                          border: '1px solid #fecaca',
-                          borderRadius: '6px',
-                          padding: '0.5rem',
-                          fontSize: '0.875rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem'
-                        }}
-                        title="Delete File"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </AdminCard>
+      )}
 
-      {/* Upload/Edit File Modal */}
+      {/* Upload/Edit Modal */}
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '2rem',
-            width: '100%',
-            maxWidth: '600px',
-            maxHeight: '90vh',
-            overflow: 'auto'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <h2 style={{
-                fontSize: '1.25rem',
-                fontWeight: 600,
-                color: '#111827',
-                margin: 0
-              }}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <AdminCard className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" padding="p-6 sm:p-8">
+            <div className="flex items-start justify-between mb-6">
+              <h2 className="text-headline-md font-bold text-on-surface">
                 {selectedFile ? 'Edit File' : 'Upload New File'}
               </h2>
               <button
@@ -749,312 +507,181 @@ const ProductFilesPage = () => {
                   setShowModal(false);
                   resetForm();
                 }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  color: '#6b7280',
-                  cursor: 'pointer'
-                }}
+                className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
               >
-                ×
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSaveFile}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {/* Product */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    color: '#374151',
-                    marginBottom: '0.5rem'
-                  }}>
-                    Product *
-                  </label>
-                  <select
-                    name="product_id"
-                    value={formData.product_id}
-                    onChange={handleInputChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: `2px solid ${formErrors.product_id ? '#dc2626' : '#e5e7eb'}`,
-                      borderRadius: '8px',
-                      fontSize: '0.875rem'
-                    }}
-                  >
-                    <option value="">Select a product</option>
-                    {products.map(product => (
-                      <option key={product.id} value={product.id}>
-                        {product.name}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.product_id && (
-                    <div style={{ color: '#dc2626', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                      {formErrors.product_id}
-                    </div>
-                  )}
-                </div>
+            <form onSubmit={handleSaveFile} className="space-y-5">
+              <AdminSelect
+                label="Product *"
+                name="product_id"
+                value={formData.product_id}
+                onChange={handleInputChange}
+                error={formErrors.product_id}
+                options={[
+                  { value: '', label: 'Select a product' },
+                  ...products.map((p) => ({ value: p.id, label: p.name })),
+                ]}
+              />
 
-                {/* File Upload (only for new files) */}
-                {!selectedFile && (
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: '#374151',
-                      marginBottom: '0.5rem'
-                    }}>
-                      PDF File *
-                    </label>
+              {!selectedFile && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[12px] font-bold uppercase tracking-wider text-on-surface-variant">
+                    PDF File *
+                  </label>
+                  <label
+                    className={`flex items-center justify-center gap-3 px-4 py-6 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
+                      formErrors.file
+                        ? 'border-error bg-error-container/30'
+                        : selectedFileForUpload
+                        ? 'border-primary-container bg-primary-container/10'
+                        : 'border-outline-variant/60 hover:border-on-surface hover:bg-surface-container-low'
+                    }`}
+                  >
                     <input
                       type="file"
                       accept=".pdf"
                       onChange={handleFileSelect}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: `2px solid ${formErrors.file ? '#dc2626' : '#e5e7eb'}`,
-                        borderRadius: '8px',
-                        fontSize: '0.875rem'
-                      }}
+                      className="hidden"
                     />
-                    {formErrors.file && (
-                      <div style={{ color: '#dc2626', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                        {formErrors.file}
-                      </div>
-                    )}
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                      Only PDF files up to 10MB are allowed
+                    <span className="material-symbols-outlined text-[28px] text-on-surface-variant">
+                      {selectedFileForUpload ? 'check_circle' : 'upload_file'}
+                    </span>
+                    <div>
+                      <p className="text-[14px] font-bold text-on-surface">
+                        {selectedFileForUpload ? selectedFileForUpload.name : 'Click to choose PDF file'}
+                      </p>
+                      <p className="text-[12px] text-on-surface-variant/70">
+                        Only PDF files up to 10MB are allowed
+                      </p>
                     </div>
-                  </div>
-                )}
-
-                {/* Display Name */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    color: '#374151',
-                    marginBottom: '0.5rem'
-                  }}>
-                    Display Name *
                   </label>
-                  <input
-                    type="text"
-                    name="display_name"
-                    value={formData.display_name}
-                    onChange={handleInputChange}
-                    placeholder="File display name"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: `2px solid ${formErrors.display_name ? '#dc2626' : '#e5e7eb'}`,
-                      borderRadius: '8px',
-                      fontSize: '0.875rem'
-                    }}
-                  />
-                  {formErrors.display_name && (
-                    <div style={{ color: '#dc2626', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                      {formErrors.display_name}
-                    </div>
+                  {formErrors.file && (
+                    <p className="text-[12px] text-error font-medium">{formErrors.file}</p>
                   )}
                 </div>
+              )}
 
-                {/* Description */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    color: '#374151',
-                    marginBottom: '0.5rem'
-                  }}>
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="File description..."
-                    rows={3}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '0.875rem',
-                      resize: 'vertical'
-                    }}
-                  />
-                </div>
+              <AdminInput
+                label="Display Name *"
+                name="display_name"
+                value={formData.display_name}
+                onChange={handleInputChange}
+                placeholder="File display name"
+                error={formErrors.display_name}
+              />
 
-                {/* Category and Sort Order */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: '#374151',
-                      marginBottom: '0.5rem'
-                    }}>
-                      Category
-                    </label>
-                    <select
-                      name="file_category"
-                      value={formData.file_category}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: '2px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '0.875rem'
-                      }}
-                    >
-                      <option value="manual">Manual</option>
-                      <option value="catalog">Catalog</option>
-                      <option value="specification">Specification</option>
-                      <option value="warranty">Warranty</option>
-                      <option value="installation">Installation Guide</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: '#374151',
-                      marginBottom: '0.5rem'
-                    }}>
-                      Sort Order
-                    </label>
-                    <input
-                      type="number"
-                      name="sort_order"
-                      value={formData.sort_order}
-                      onChange={handleInputChange}
-                      min="0"
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: '2px solid #e5e7eb',
-                        borderRadius: '8px',
-                        fontSize: '0.875rem'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Checkboxes */}
-                <div style={{ display: 'flex', gap: '2rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input
-                      type="checkbox"
-                      name="is_active"
-                      checked={formData.is_active}
-                      onChange={handleInputChange}
-                    />
-                    <span style={{ fontSize: '0.875rem', color: '#374151' }}>Active</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input
-                      type="checkbox"
-                      name="is_featured"
-                      checked={formData.is_featured}
-                      onChange={handleInputChange}
-                    />
-                    <span style={{ fontSize: '0.875rem', color: '#374151' }}>Featured</span>
-                  </label>
-                </div>
-
-                {/* Upload Progress */}
-                {uploadProgress > 0 && uploadProgress < 100 && (
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <span style={{ fontSize: '0.875rem', color: '#374151' }}>Uploading...</span>
-                      <span style={{ fontSize: '0.875rem', color: '#374151' }}>{uploadProgress}%</span>
-                    </div>
-                    <div style={{
-                      width: '100%',
-                      height: '0.5rem',
-                      background: '#e5e7eb',
-                      borderRadius: '9999px',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        width: `${uploadProgress}%`,
-                        height: '100%',
-                        background: '#3b82f6',
-                        transition: 'width 0.3s ease'
-                      }}></div>
-                    </div>
-                  </div>
-                )}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[12px] font-bold uppercase tracking-wider text-on-surface-variant">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  rows={3}
+                  placeholder="File description…"
+                  className="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-xl px-4 py-2.5 text-[14px] text-on-surface focus:outline-none focus:border-on-surface focus:ring-2 focus:ring-primary-container/40 transition-all resize-y"
+                />
               </div>
 
-              {/* Modal Actions */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '1rem',
-                marginTop: '2rem'
-              }}>
-                <button
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <AdminSelect
+                  label="Category"
+                  name="file_category"
+                  value={formData.file_category}
+                  onChange={handleInputChange}
+                  options={[
+                    { value: 'manual', label: 'Manual' },
+                    { value: 'catalog', label: 'Catalog' },
+                    { value: 'specification', label: 'Specification' },
+                    { value: 'warranty', label: 'Warranty' },
+                    { value: 'installation', label: 'Installation Guide' },
+                    { value: 'other', label: 'Other' },
+                  ]}
+                />
+                <AdminInput
+                  label="Sort Order"
+                  type="number"
+                  name="sort_order"
+                  value={formData.sort_order}
+                  onChange={handleInputChange}
+                  min="0"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-5">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    checked={formData.is_active}
+                    onChange={handleInputChange}
+                    className="w-5 h-5 rounded accent-primary-container"
+                  />
+                  <span className="text-[14px] text-on-surface">Active</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="is_featured"
+                    checked={formData.is_featured}
+                    onChange={handleInputChange}
+                    className="w-5 h-5 rounded accent-primary-container"
+                  />
+                  <span className="text-[14px] text-on-surface">Featured</span>
+                </label>
+              </div>
+
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-[13px] text-on-surface-variant font-medium">
+                      Uploading…
+                    </span>
+                    <span className="text-[13px] text-on-surface font-bold">
+                      {uploadProgress}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary-container transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-surface-container">
+                <AdminButton
                   type="button"
+                  variant="secondary"
                   onClick={() => {
                     setShowModal(false);
                     resetForm();
                   }}
-                  style={{
-                    background: '#f3f4f6',
-                    color: '#374151',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1.5rem',
-                    fontSize: '0.875rem',
-                    cursor: 'pointer'
-                  }}
                 >
                   Cancel
-                </button>
-                <button
+                </AdminButton>
+                <AdminButton
                   type="submit"
+                  variant="primary"
+                  icon={modalLoading ? 'progress_activity' : selectedFile ? 'save' : 'upload'}
                   disabled={modalLoading || (uploadProgress > 0 && uploadProgress < 100)}
-                  style={{
-                    background: modalLoading ? '#9ca3af' : '#FFD700',
-                    color: '#2c2c2c',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1.5rem',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    cursor: modalLoading ? 'not-allowed' : 'pointer'
-                  }}
                 >
-                  {modalLoading ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin" style={{ marginRight: '0.5rem' }}></i>
-                      {selectedFile ? 'Updating...' : 'Uploading...'}
-                    </>
-                  ) : (
-                    <>
-                      <i className={`fas fa-${selectedFile ? 'save' : 'upload'}`} style={{ marginRight: '0.5rem' }}></i>
-                      {selectedFile ? 'Update File' : 'Upload File'}
-                    </>
-                  )}
-                </button>
+                  {modalLoading
+                    ? selectedFile
+                      ? 'Updating…'
+                      : 'Uploading…'
+                    : selectedFile
+                    ? 'Update File'
+                    : 'Upload File'}
+                </AdminButton>
               </div>
             </form>
-          </div>
+          </AdminCard>
         </div>
       )}
     </div>

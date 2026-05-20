@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { authStorage } from '../../../lib/localStorage-utils';
 import { apiClient } from '../../../lib/api';
 import { ENV_CONFIG } from '../../../environment/index.js';
+import { PageHeader, AdminButton } from '../../../components/admin/ui';
 
 const STEPS = ['Upload', 'Preview', 'Results'];
 
@@ -254,39 +255,47 @@ export default function ImportProductsPage() {
   // ── Render ─────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="admin-legacy space-y-6">
       {/* Toast */}
       {toast.message && (
-        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-lg shadow-lg text-white text-sm font-medium transition-all ${
-          toast.type === 'success' ? 'bg-green-500' : toast.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-2xl admin-shadow-soft text-white text-sm font-medium transition-all ${
+          toast.type === 'success' ? 'bg-emerald-500' : toast.type === 'error' ? 'bg-error' : 'bg-on-surface'
         }`}>
           {toast.message}
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Bulk Product Import</h1>
-          <p className="text-gray-600 mt-1">Import products from Excel with optional image ZIP</p>
-        </div>
+      <div className="max-w-5xl mx-auto space-y-8">
+        <PageHeader
+          title="Bulk Product Import"
+          description="Import products from Excel with optional image ZIP."
+          actions={
+            <Link
+              href="/admin/import-products/history"
+              className="inline-flex items-center gap-2 h-12 px-5 rounded-xl bg-surface-container-lowest border border-outline-variant/60 text-on-surface font-bold text-[14px] hover:bg-surface-container transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]">history</span>
+              Import History
+            </Link>
+          }
+        />
 
         {/* Stepper */}
-        <div className="flex items-center mb-10">
+        <div className="flex items-center">
           {STEPS.map((label, i) => (
             <div key={label} className="flex items-center flex-1">
-              <div className={`flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold shrink-0 ${
-                i < currentStep ? 'bg-green-500 text-white' :
-                i === currentStep ? 'bg-blue-600 text-white' :
-                'bg-gray-200 text-gray-500'
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold shrink-0 transition-colors ${
+                i < currentStep ? 'bg-on-surface text-surface' :
+                i === currentStep ? 'bg-primary-container text-on-primary-fixed' :
+                'bg-surface-container text-on-surface-variant/60'
               }`}>
-                {i < currentStep ? <i className="fas fa-check text-xs"></i> : i + 1}
+                {i < currentStep ? <span className="material-symbols-outlined text-[20px]">check</span> : i + 1}
               </div>
-              <span className={`ml-2 text-sm font-medium whitespace-nowrap ${
-                i === currentStep ? 'text-blue-600' : 'text-gray-500'
+              <span className={`ml-3 text-[14px] font-bold whitespace-nowrap ${
+                i === currentStep ? 'text-on-surface' : 'text-on-surface-variant/60'
               }`}>{label}</span>
               {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-4 ${i < currentStep ? 'bg-green-400' : 'bg-gray-200'}`} />
+                <div className={`flex-1 h-0.5 mx-4 ${i < currentStep ? 'bg-on-surface/30' : 'bg-surface-container'}`} />
               )}
             </div>
           ))}

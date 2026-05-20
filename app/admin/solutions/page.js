@@ -5,6 +5,14 @@ import Image from 'next/image';
 import { apiClient, solutionsAPI } from '../../../lib/api';
 import AssociatedProductsSelector from '../../../components/admin/AssociatedProductsSelector';
 import SolutionImageDiagnostic from '../../../components/admin/SolutionImageDiagnostic';
+import {
+  AdminCard,
+  AdminButton,
+  AdminBadge,
+  PageHeader,
+  EmptyState,
+  StatCard,
+} from '../../../components/admin/ui';
 
 const SolutionsManager = () => {
   const [solutions, setSolutions] = useState([]);
@@ -250,184 +258,189 @@ const SolutionsManager = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading solutions...</span>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 rounded-full border-4 border-surface-container border-t-primary-container animate-spin" />
       </div>
     );
   }
 
+  const totalProducts = solutions.reduce((acc, s) => acc + (s.products_count || 0), 0);
+  const activeCount = solutions.filter((s) => s.is_active).length;
+
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Solutions Management</h1>
-          <p className="text-gray-600">Manage your solutions and their associated products</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowDiagnostic(!showDiagnostic)}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {showDiagnostic ? 'Hide Diagnostic' : 'Image Diagnostic'}
-          </button>
-          <button
-            onClick={handleAddNew}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Add New Solution
-          </button>
-        </div>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Solutions"
+        description="Curate solutions and their associated products."
+        actions={
+          <>
+            <AdminButton
+              variant="secondary"
+              size="lg"
+              icon={showDiagnostic ? 'visibility_off' : 'troubleshoot'}
+              onClick={() => setShowDiagnostic(!showDiagnostic)}
+            >
+              {showDiagnostic ? 'Hide Diagnostic' : 'Diagnostic'}
+            </AdminButton>
+            <AdminButton variant="primary" icon="add" size="lg" onClick={handleAddNew}>
+              New Solution
+            </AdminButton>
+          </>
+        }
+      />
 
-      {/* Diagnostic Panel */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-gutter">
+        <StatCard
+          icon="lightbulb"
+          label="Total Solutions"
+          value={solutions.length.toString()}
+          change="Catalog"
+          changeType="neutral"
+        />
+        <StatCard
+          icon="check_circle"
+          label="Active"
+          value={activeCount.toString()}
+          change="Published"
+          changeType="positive"
+        />
+        <StatCard
+          icon="inventory_2"
+          label="Linked Products"
+          value={totalProducts.toString()}
+          change="Across all"
+          changeType="neutral"
+        />
+      </section>
+
       {showDiagnostic && (
-        <div className="mb-6">
+        <AdminCard>
           <SolutionImageDiagnostic />
-        </div>
+        </AdminCard>
       )}
 
-      {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-600">Error: {error}</p>
-          <button 
-            onClick={fetchSolutions}
-            className="mt-2 text-red-600 hover:text-red-800 underline"
-          >
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {/* Solutions Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Solution
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Products
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {solutions.map((solution) => (
-              <tr key={solution.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-16 w-16">
-                      {(solution.cover_image || solution.cover_image_url) ? (
-                        <Image
-                          src={solution.cover_image_url || solution.cover_image}
-                          alt={solution.title}
-                          width={64}
-                          height={64}
-                          className="h-16 w-16 rounded-lg object-cover border border-gray-200"
-                          onError={(e) => {
-                            console.error('Image load error for solution:', solution.id, solution.cover_image_url || solution.cover_image);
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div className="h-16 w-16 rounded-lg bg-gray-200 flex items-center justify-center" style={{display: (solution.cover_image || solution.cover_image_url) ? 'none' : 'flex'}}>
-                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{solution.title}</div>
-                      <div className="text-sm text-gray-500">
-                        {solution.description ? solution.description.substring(0, 60) + '...' : 'No description'}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {solution.products_count || 0} products
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {solution.images?.length || 0} images
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    solution.is_active 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {solution.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(solution.created_at).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleEdit(solution)}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(solution.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {solutions.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No solutions</h3>
-            <p className="mt-1 text-sm text-gray-500">Get started by creating a new solution.</p>
-            <div className="mt-6">
-              <button
-                onClick={handleAddNew}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                New Solution
+        <div className="flex items-start justify-between gap-4 px-5 py-3 rounded-2xl bg-error-container border border-error/30 text-on-error-container">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined mt-0.5">error</span>
+            <div>
+              <p className="font-medium">Error: {error}</p>
+              <button onClick={fetchSolutions} className="underline text-[13px] mt-1">
+                Try Again
               </button>
             </div>
           </div>
-        )}
-      </div>
+          <button onClick={() => setError(null)} className="text-on-error-container/70 hover:text-on-error-container">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      )}
+
+      {solutions.length === 0 && !loading ? (
+        <EmptyState
+          icon="lightbulb"
+          title="No solutions yet"
+          description="Get started by creating your first solution."
+          action={
+            <AdminButton variant="primary" icon="add" onClick={handleAddNew}>
+              New Solution
+            </AdminButton>
+          }
+        />
+      ) : (
+        <AdminCard padding="p-0" className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-surface-container">
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70">Solution</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70">Products</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70">Status</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70 hidden lg:table-cell">Created</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-container">
+                {solutions.map((solution) => (
+                  <tr key={solution.id} className="hover:bg-surface-container-low/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-container border border-outline-variant/20 flex-shrink-0 flex items-center justify-center">
+                          {(solution.cover_image || solution.cover_image_url) ? (
+                            <Image
+                              src={solution.cover_image_url || solution.cover_image}
+                              alt={solution.title}
+                              width={56}
+                              height={56}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span className="material-symbols-outlined text-on-surface-variant/40 text-[22px]">image</span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-on-surface font-bold text-[14px] truncate">{solution.title}</p>
+                          <p className="text-on-surface-variant/60 text-[12px] truncate max-w-md">
+                            {solution.description
+                              ? solution.description.substring(0, 80) + (solution.description.length > 80 ? '…' : '')
+                              : 'No description'}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[13px] text-on-surface font-bold">
+                          {solution.products_count || 0} products
+                        </span>
+                        <span className="text-[11px] text-on-surface-variant/60">
+                          {solution.images?.length || 0} images
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <AdminBadge tone={solution.is_active ? 'active' : 'pending'} dot>
+                        {solution.is_active ? 'Active' : 'Inactive'}
+                      </AdminBadge>
+                    </td>
+                    <td className="px-6 py-4 hidden lg:table-cell">
+                      <p className="text-[13px] text-on-surface-variant/70">
+                        {new Date(solution.created_at).toLocaleDateString()}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          onClick={() => handleEdit(solution)}
+                          title="Edit"
+                          className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(solution.id)}
+                          title="Delete"
+                          className="w-9 h-9 rounded-lg hover:bg-error-container text-error flex items-center justify-center transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </AdminCard>
+      )}
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 p-4">
+          <div className="relative top-10 mx-auto p-6 sm:p-8 w-full max-w-4xl bg-surface admin-shadow-soft rounded-2xl border border-outline-variant/30">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-900">
                 {editingSolution ? 'Edit Solution' : 'Add New Solution'}

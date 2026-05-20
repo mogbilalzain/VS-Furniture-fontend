@@ -5,6 +5,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authStorage } from '../../../lib/localStorage-utils';
 import { ENV_CONFIG } from '../../../environment';
+import {
+  AdminCard,
+  AdminButton,
+  AdminBadge,
+  AdminInput,
+  AdminSelect,
+  PageHeader,
+  EmptyState,
+  StatCard,
+} from '../../../components/admin/ui';
 
 export default function ContactMessagesPage() {
   const router = useRouter();
@@ -19,16 +29,13 @@ export default function ContactMessagesPage() {
     total_messages: 0,
     unread_messages: 0,
     read_messages: 0,
-    replied_messages: 0
+    replied_messages: 0,
   });
 
   useEffect(() => {
-    // Check authentication
     if (!authStorage.isAuthenticatedAdmin()) {
-      console.log('❌ Contact Messages page - Not authenticated admin, redirecting...');
       router.replace('/admin/login');
     } else {
-      console.log('✅ Contact Messages page - User is authenticated admin');
       loadMessages();
       loadStats();
     }
@@ -39,12 +46,10 @@ export default function ContactMessagesPage() {
       setLoading(true);
       setError('');
 
-      // Check if user is authenticated admin using authStorage
       if (!authStorage.isAuthenticatedAdmin()) {
         throw new Error('No authentication token found. Please login again.');
       }
 
-      // Get token using authStorage
       const token = authStorage.getToken();
       if (!token) {
         throw new Error('No authentication token found. Please login again.');
@@ -54,23 +59,20 @@ export default function ContactMessagesPage() {
         page: currentPage.toString(),
         limit: '10',
         ...(selectedStatus !== 'all' && { status: selectedStatus }),
-        ...(searchTerm && { search: searchTerm })
+        ...(searchTerm && { search: searchTerm }),
       });
-
-      console.log('🔍 Making API request with token:', token.substring(0, 20) + '...');
-      console.log('🔍 API URL:', `${ENV_CONFIG.API_BASE_URL}/contact?${params}`);
 
       const response = await fetch(`${ENV_CONFIG.API_BASE_URL}/contact?${params}`, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
         if (data.success) {
           setMessages(data.data.data || []);
@@ -79,7 +81,6 @@ export default function ContactMessagesPage() {
           throw new Error(data.message || 'Failed to load messages');
         }
       } else {
-        // Handle specific HTTP status codes
         if (response.status === 401) {
           throw new Error('Authentication required. Please login as admin.');
         } else if (response.status === 403) {
@@ -92,17 +93,15 @@ export default function ContactMessagesPage() {
       }
     } catch (err) {
       console.error('Error loading messages:', err);
-      
-      // Check if it's an authentication error
+
       if (err.message.includes('401') || err.message.includes('Unauthorized')) {
         setError('Authentication required. Please login as admin.');
         router.replace('/admin/login');
         return;
       }
-      
+
       setError('Failed to load messages. Using fallback data for testing.');
-      
-      // Fallback data for testing
+
       setMessages([
         {
           id: 1,
@@ -110,10 +109,11 @@ export default function ContactMessagesPage() {
           email: 'john@example.com',
           contact_number: '+971501234567',
           subject: 'Office Furniture Inquiry',
-          message: 'I am interested in your ergonomic chairs and would like to know more about pricing and availability.',
+          message:
+            'I am interested in your ergonomic chairs and would like to know more about pricing and availability.',
           questions: 'Do you offer bulk discounts?',
           status: 'unread',
-          created_at: '2024-01-15T10:30:00Z'
+          created_at: '2024-01-15T10:30:00Z',
         },
         {
           id: 2,
@@ -124,7 +124,7 @@ export default function ContactMessagesPage() {
           message: 'When can you deliver to Dubai Marina? I need 5 office desks.',
           questions: 'What are the delivery charges?',
           status: 'read',
-          created_at: '2024-01-14T15:45:00Z'
+          created_at: '2024-01-14T15:45:00Z',
         },
         {
           id: 3,
@@ -132,11 +132,12 @@ export default function ContactMessagesPage() {
           email: 'mike@example.com',
           contact_number: '+971509876543',
           subject: 'Quotation Request',
-          message: 'Please send me a detailed quote for 20 desks and 20 chairs for our new office.',
+          message:
+            'Please send me a detailed quote for 20 desks and 20 chairs for our new office.',
           questions: 'Can you provide installation service?',
           status: 'replied',
-          created_at: '2024-01-13T09:15:00Z'
-        }
+          created_at: '2024-01-13T09:15:00Z',
+        },
       ]);
       setTotalPages(1);
     } finally {
@@ -146,25 +147,16 @@ export default function ContactMessagesPage() {
 
   const loadStats = async () => {
     try {
-      // Check if user is authenticated admin using authStorage
-      if (!authStorage.isAuthenticatedAdmin()) {
-        console.warn('⚠️ User not authenticated admin for stats request');
-        return;
-      }
-
-      // Get token using authStorage
+      if (!authStorage.isAuthenticatedAdmin()) return;
       const token = authStorage.getToken();
-      if (!token) {
-        console.warn('⚠️ No token found for stats request');
-        return;
-      }
+      if (!token) return;
 
       const response = await fetch(`${ENV_CONFIG.API_BASE_URL}/contact/stats/overview`, {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -176,26 +168,22 @@ export default function ContactMessagesPage() {
       }
     } catch (err) {
       console.error('Error loading stats:', err);
-      // Fallback stats
       setStats({
         total_messages: 25,
         unread_messages: 5,
         read_messages: 15,
-        replied_messages: 5
+        replied_messages: 5,
       });
     }
   };
 
   const updateMessageStatus = async (messageId, newStatus) => {
     try {
-      // Check if user is authenticated admin using authStorage
       if (!authStorage.isAuthenticatedAdmin()) {
         alert('Authentication required. Please login again.');
         router.replace('/admin/login');
         return;
       }
-
-      // Get token using authStorage
       const token = authStorage.getToken();
       if (!token) {
         alert('Authentication required. Please login again.');
@@ -206,15 +194,14 @@ export default function ContactMessagesPage() {
       const response = await fetch(`${ENV_CONFIG.API_BASE_URL}/contact/${messageId}/status`, {
         method: 'PATCH',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus }),
       });
 
       if (response.ok) {
-        // Refresh messages and stats
         loadMessages();
         loadStats();
       } else {
@@ -232,14 +219,11 @@ export default function ContactMessagesPage() {
     }
 
     try {
-      // Check if user is authenticated admin using authStorage
       if (!authStorage.isAuthenticatedAdmin()) {
         alert('Authentication required. Please login again.');
         router.replace('/admin/login');
         return;
       }
-
-      // Get token using authStorage
       const token = authStorage.getToken();
       if (!token) {
         alert('Authentication required. Please login again.');
@@ -250,14 +234,13 @@ export default function ContactMessagesPage() {
       const response = await fetch(`${ENV_CONFIG.API_BASE_URL}/contact/${messageId}`, {
         method: 'DELETE',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.ok) {
-        // Refresh messages and stats
         loadMessages();
         loadStats();
       } else {
@@ -269,22 +252,13 @@ export default function ContactMessagesPage() {
     }
   };
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      unread: 'bg-red-100 text-red-800',
-      read: 'bg-blue-100 text-blue-800',
-      replied: 'bg-green-100 text-green-800'
-    };
-    return badges[status] || 'bg-gray-100 text-gray-800';
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -292,281 +266,195 @@ export default function ContactMessagesPage() {
     { value: 'all', label: 'All Status' },
     { value: 'unread', label: 'Unread' },
     { value: 'read', label: 'Read' },
-    { value: 'replied', label: 'Replied' }
+    { value: 'replied', label: 'Replied' },
   ];
 
+  const getStatusTone = (status) => {
+    switch (status) {
+      case 'unread':
+        return 'error';
+      case 'read':
+        return 'info';
+      case 'replied':
+        return 'active';
+      default:
+        return 'pending';
+    }
+  };
+
   return (
-    <div>
-      {/* Page Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ 
-          fontSize: '2rem', 
-          fontWeight: 'bold', 
-          color: '#111827', 
-          margin: '0 0 0.5rem 0' 
-        }}>
-          Contact Messages
-        </h1>
-        <p style={{ color: '#6b7280', margin: 0 }}>
-          Manage and respond to customer inquiries
-        </p>
-      </div>
-
-      {/* Stats Cards */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-        gap: '1rem', 
-        marginBottom: '2rem' 
-      }}>
-        <div style={{ 
-          background: 'white', 
-          padding: '1.5rem', 
-          borderRadius: '8px', 
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' 
-        }}>
-          <h3 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#111827', margin: '0 0 0.5rem 0' }}>
-            {stats.total_messages}
-          </h3>
-          <p style={{ color: '#6b7280', margin: 0 }}>Total Messages</p>
-        </div>
-        <div style={{ 
-          background: 'white', 
-          padding: '1.5rem', 
-          borderRadius: '8px', 
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' 
-        }}>
-          <h3 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ef4444', margin: '0 0 0.5rem 0' }}>
-            {stats.unread_messages}
-          </h3>
-          <p style={{ color: '#6b7280', margin: 0 }}>Unread</p>
-        </div>
-        <div style={{ 
-          background: 'white', 
-          padding: '1.5rem', 
-          borderRadius: '8px', 
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' 
-        }}>
-          <h3 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#3b82f6', margin: '0 0 0.5rem 0' }}>
-            {stats.read_messages}
-          </h3>
-          <p style={{ color: '#6b7280', margin: 0 }}>Read</p>
-        </div>
-        <div style={{ 
-          background: 'white', 
-          padding: '1.5rem', 
-          borderRadius: '8px', 
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' 
-        }}>
-          <h3 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981', margin: '0 0 0.5rem 0' }}>
-            {stats.replied_messages}
-          </h3>
-          <p style={{ color: '#6b7280', margin: 0 }}>Replied</p>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div style={{ 
-        background: 'white', 
-        padding: '1.5rem', 
-        borderRadius: '8px', 
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', 
-        marginBottom: '1.5rem' 
-      }}>
-        <div style={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          gap: '1rem', 
-          alignItems: 'center' 
-        }}>
-          {/* Search */}
-          <div style={{ flex: '1', minWidth: '200px' }}>
-            <input
-              type="text"
-              placeholder="Search by name, email, or subject..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 1rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '0.875rem'
-              }}
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              style={{
-                padding: '0.5rem 1rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                background: 'white'
-              }}
-            >
-              {statuses.map(status => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Refresh Button */}
-          <button
-            onClick={() => { loadMessages(); loadStats(); }}
-            style={{
-              padding: '0.5rem 1rem',
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '0.875rem'
+    <div className="space-y-8">
+      <PageHeader
+        title="Contact Messages"
+        description="Manage and respond to customer inquiries."
+        actions={
+          <AdminButton
+            variant="primary"
+            icon="refresh"
+            size="lg"
+            onClick={() => {
+              loadMessages();
+              loadStats();
             }}
           >
             Refresh
-          </button>
-        </div>
-      </div>
+          </AdminButton>
+        }
+      />
 
-      {/* Messages Table */}
-      <div style={{ 
-        background: 'white', 
-        borderRadius: '8px', 
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', 
-        overflow: 'hidden' 
-      }}>
-        {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center' }}>
-            <div style={{ 
-              display: 'inline-block', 
-              width: '2rem', 
-              height: '2rem', 
-              border: '2px solid #e5e7eb', 
-              borderTop: '2px solid #3b82f6', 
-              borderRadius: '50%', 
-              animation: 'spin 1s linear infinite' 
-            }}></div>
-            <p style={{ marginTop: '1rem', color: '#6b7280' }}>Loading messages...</p>
+      {/* Stats */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+        <StatCard
+          icon="mail"
+          label="Total Messages"
+          value={stats.total_messages?.toString() || '0'}
+          change="All time"
+          changeType="neutral"
+        />
+        <StatCard
+          icon="mark_email_unread"
+          label="Unread"
+          value={stats.unread_messages?.toString() || '0'}
+          change="Needs reply"
+          changeType="negative"
+        />
+        <StatCard
+          icon="drafts"
+          label="Read"
+          value={stats.read_messages?.toString() || '0'}
+          change="Viewed"
+          changeType="neutral"
+        />
+        <StatCard
+          icon="reply"
+          label="Replied"
+          value={stats.replied_messages?.toString() || '0'}
+          change="Closed"
+          changeType="positive"
+        />
+      </section>
+
+      {/* Filters */}
+      <AdminCard padding="p-5 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <div className="sm:col-span-2">
+            <AdminInput
+              label="Search messages"
+              icon="search"
+              placeholder="Search by name, email, or subject…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-        ) : error ? (
-          <div style={{ padding: '3rem', textAlign: 'center' }}>
-            <p style={{ color: '#ef4444', marginBottom: '1rem' }}>⚠️ {error}</p>
-            <button
-              onClick={() => { loadMessages(); loadStats(); }}
-              style={{
-                padding: '0.5rem 1rem',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer'
+          <AdminSelect
+            label="Status"
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            options={statuses}
+          />
+        </div>
+      </AdminCard>
+
+      {/* Messages table */}
+      {loading ? (
+        <AdminCard className="text-center" padding="p-10">
+          <div className="w-12 h-12 rounded-full border-4 border-surface-container border-t-primary-container animate-spin mx-auto mb-4" />
+          <p className="text-on-surface-variant">Loading messages…</p>
+        </AdminCard>
+      ) : error && messages.length === 0 ? (
+        <EmptyState
+          icon="error"
+          title="Could not load messages"
+          description={error}
+          action={
+            <AdminButton
+              variant="primary"
+              icon="refresh"
+              onClick={() => {
+                loadMessages();
+                loadStats();
               }}
             >
               Try Again
-            </button>
-          </div>
-        ) : messages.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center' }}>
-            <p style={{ color: '#6b7280' }}>No messages found</p>
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ background: '#f9fafb' }}>
-                <tr>
-                  <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Name</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Email</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Phone</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Subject</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Status</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Date</th>
-                  <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>Actions</th>
+            </AdminButton>
+          }
+        />
+      ) : messages.length === 0 ? (
+        <EmptyState
+          icon="mail"
+          title="No messages yet"
+          description="Customer inquiries from your contact form will appear here."
+        />
+      ) : (
+        <AdminCard padding="p-0" className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-surface-container">
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70">Sender</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70">Subject</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70 hidden md:table-cell">Phone</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70">Status</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70 hidden lg:table-cell">Date</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.1em] text-on-surface-variant/70 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {messages.map((message, index) => (
-                  <tr key={message.id} style={{ borderTop: index > 0 ? '1px solid #e5e7eb' : 'none' }}>
-                    <td style={{ padding: '0.75rem' }}>
-                      <div style={{ fontWeight: '500', color: '#111827' }}>{message.name}</div>
-                    </td>
-                    <td style={{ padding: '0.75rem' }}>
-                      <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>{message.email}</div>
-                    </td>
-                    <td style={{ padding: '0.75rem' }}>
-                      <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>{message.contact_number || 'N/A'}</div>
-                    </td>
-                    <td style={{ padding: '0.75rem' }}>
-                      <div style={{ color: '#111827', fontSize: '0.875rem' }}>
-                        {message.subject.length > 30 ? message.subject.substring(0, 30) + '...' : message.subject}
+              <tbody className="divide-y divide-surface-container">
+                {messages.map((message) => (
+                  <tr key={message.id} className="hover:bg-surface-container-low/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-xl bg-surface-container flex items-center justify-center font-bold text-on-surface-variant text-[12px] flex-shrink-0">
+                          {message.name?.[0]?.toUpperCase() || '?'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-on-surface font-bold text-[14px] truncate">{message.name}</p>
+                          <p className="text-on-surface-variant/60 text-[12px] truncate">{message.email}</p>
+                        </div>
                       </div>
                     </td>
-                    <td style={{ padding: '0.75rem' }}>
-                      <span style={{
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.75rem',
-                        fontWeight: '500',
-                        textTransform: 'capitalize'
-                      }} className={getStatusBadge(message.status)}>
+                    <td className="px-6 py-4">
+                      <p className="text-[14px] text-on-surface truncate max-w-xs">
+                        {message.subject}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 hidden md:table-cell">
+                      <p className="text-[13px] text-on-surface-variant font-mono">
+                        {message.contact_number || '—'}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <AdminBadge tone={getStatusTone(message.status)} dot>
                         {message.status}
-                      </span>
+                      </AdminBadge>
                     </td>
-                    <td style={{ padding: '0.75rem' }}>
-                      <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                        {formatDate(message.created_at)}
-                      </div>
+                    <td className="px-6 py-4 hidden lg:table-cell">
+                      <p className="text-[13px] text-on-surface-variant/70">{formatDate(message.created_at)}</p>
                     </td>
-                    <td style={{ padding: '0.75rem' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <td className="px-6 py-4 text-right">
+                      <div className="inline-flex items-center gap-1">
                         <Link
                           href={`/admin/contact-messages/${message.id}`}
-                          style={{
-                            padding: '0.25rem 0.5rem',
-                            background: '#3b82f6',
-                            color: 'white',
-                            textDecoration: 'none',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem'
-                          }}
+                          title="View"
+                          className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
                         >
-                          View
+                          <span className="material-symbols-outlined text-[18px]">visibility</span>
                         </Link>
                         {message.status === 'unread' && (
                           <button
                             onClick={() => updateMessageStatus(message.id, 'read')}
-                            style={{
-                              padding: '0.25rem 0.5rem',
-                              background: '#10b981',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              fontSize: '0.75rem',
-                              cursor: 'pointer'
-                            }}
+                            title="Mark as read"
+                            className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors"
                           >
-                            Mark Read
+                            <span className="material-symbols-outlined text-[18px]">mark_email_read</span>
                           </button>
                         )}
                         <button
                           onClick={() => deleteMessage(message.id)}
-                          style={{
-                            padding: '0.25rem 0.5rem',
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer'
-                          }}
+                          title="Delete"
+                          className="w-9 h-9 rounded-lg hover:bg-error-container text-error flex items-center justify-center transition-colors"
                         >
-                          Delete
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
                         </button>
                       </div>
                     </td>
@@ -575,66 +463,33 @@ export default function ContactMessagesPage() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          gap: '0.5rem', 
-          marginTop: '1.5rem' 
-        }}>
-          <button
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            style={{
-              padding: '0.5rem 1rem',
-              background: currentPage === 1 ? '#f3f4f6' : '#3b82f6',
-              color: currentPage === 1 ? '#9ca3af' : 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
-            }}
-          >
-            Previous
-          </button>
-          <span style={{ color: '#6b7280' }}>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            style={{
-              padding: '0.5rem 1rem',
-              background: currentPage === totalPages ? '#f3f4f6' : '#3b82f6',
-              color: currentPage === totalPages ? '#9ca3af' : 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
-            }}
-          >
-            Next
-          </button>
-        </div>
+          {totalPages > 1 && (
+            <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-t border-surface-container">
+              <p className="text-[13px] text-on-surface-variant/70 font-medium">
+                Page <span className="text-on-surface font-bold">{currentPage}</span> of{' '}
+                <span className="text-on-surface font-bold">{totalPages}</span>
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center border border-outline-variant/60 hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center border border-outline-variant/60 hover:bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </AdminCard>
       )}
-
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        .bg-red-100 { background-color: #fee2e2; }
-        .text-red-800 { color: #991b1b; }
-        .bg-blue-100 { background-color: #dbeafe; }
-        .text-blue-800 { color: #1e40af; }
-        .bg-green-100 { background-color: #dcfce7; }
-        .text-green-800 { color: #166534; }
-        .bg-gray-100 { background-color: #f3f4f6; }
-        .text-gray-800 { color: #1f2937; }
-      `}</style>
     </div>
   );
 }

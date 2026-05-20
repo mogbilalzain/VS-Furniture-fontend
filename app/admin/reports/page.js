@@ -3,6 +3,34 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authStorage } from '../../../lib/localStorage-utils'
+import {
+  AdminCard,
+  AdminButton,
+  AdminSelect,
+  StatCard,
+  PageHeader,
+} from '../../../components/admin/ui'
+
+const PERIODS = [
+  { value: 'week', label: 'This Week' },
+  { value: 'month', label: 'This Month' },
+  { value: 'quarter', label: 'This Quarter' },
+  { value: 'year', label: 'This Year' },
+]
+
+const REPORTS = [
+  { value: 'sales', label: 'Sales Report' },
+  { value: 'products', label: 'Products Report' },
+  { value: 'customers', label: 'Customers Report' },
+  { value: 'inventory', label: 'Inventory Report' },
+]
+
+const SEGMENTED_PERIODS = [
+  { value: 'week', label: '7D' },
+  { value: 'month', label: '30D' },
+  { value: 'quarter', label: '90D' },
+  { value: 'year', label: '1Y' },
+]
 
 const ReportsPage = () => {
   const router = useRouter()
@@ -10,36 +38,23 @@ const ReportsPage = () => {
   const [selectedReport, setSelectedReport] = useState('sales')
 
   useEffect(() => {
-    // Check for authentication using new system
     if (!authStorage.isAuthenticatedAdmin()) {
-      console.log('❌ Reports page - Not authenticated admin, redirecting...');
-      router.replace('/admin/login');
-    } else {
-      console.log('✅ Reports page - User is authenticated admin');
+      router.replace('/admin/login')
     }
   }, [router])
-
-  const salesData = [
-    { month: 'Jan', sales: 12000, orders: 45 },
-    { month: 'Feb', sales: 15000, orders: 52 },
-    { month: 'Mar', sales: 18000, orders: 61 },
-    { month: 'Apr', sales: 14000, orders: 48 },
-    { month: 'May', sales: 22000, orders: 73 },
-    { month: 'Jun', sales: 25000, orders: 85 }
-  ]
 
   const topProducts = [
     { name: 'Ergonomic Chair', sales: 125, revenue: 18750 },
     { name: 'Shift+ Table', sales: 98, revenue: 14700 },
     { name: 'Storage Unit', sales: 76, revenue: 11400 },
-    { name: 'Executive Desk', sales: 65, revenue: 9750 }
+    { name: 'Executive Desk', sales: 65, revenue: 9750 },
   ]
 
   const customerData = [
     { category: 'New Customers', count: 45, percentage: 25 },
     { category: 'Returning Customers', count: 89, percentage: 50 },
     { category: 'VIP Customers', count: 23, percentage: 13 },
-    { category: 'Inactive Customers', count: 21, percentage: 12 }
+    { category: 'Inactive Customers', count: 21, percentage: 12 },
   ]
 
   const exportReport = () => {
@@ -51,478 +66,205 @@ const ReportsPage = () => {
   }
 
   return (
-    <div>
-      {/* Page Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '1.5rem'
-      }}>
-        <div>
-          <h1 style={{
-            fontSize: '1.875rem',
-            fontWeight: 700,
-            color: '#111827',
-            margin: 0
-          }}>Reports & Analytics</h1>
-          <p style={{
-            color: '#6b7280',
-            margin: '0.25rem 0 0 0'
-          }}>View detailed reports and analytics</p>
-        </div>
-        <div style={{
-          display: 'flex',
-          gap: '1rem'
-        }}>
-          <button 
-            onClick={generateReport}
-            style={{
-              background: '#3d5c4d',
-              color: 'white',
-              fontWeight: 600,
-              padding: '0.75rem 1.5rem',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = '#2c2c2c'
-              e.target.style.transform = 'translateY(-2px)'
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = '#3d5c4d'
-              e.target.style.transform = 'translateY(0)'
-            }}
-          >
-            <i className="fas fa-chart-line"></i>
-            Generate Report
-          </button>
-          <button 
-            onClick={exportReport}
-            style={{
-              background: '#FFD700',
-              color: '#000',
-              fontWeight: 600,
-              padding: '0.75rem 1.5rem',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = '#e6c200'
-              e.target.style.transform = 'translateY(-2px)'
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = '#FFD700'
-              e.target.style.transform = 'translateY(0)'
-            }}
-          >
-            <i className="fas fa-download"></i>
-            Export
-          </button>
-        </div>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Performance' },
+          { label: 'Reports & Analytics' },
+        ]}
+        title="Reports &amp; Analytics"
+        description="View detailed business performance and customer insights."
+        actions={
+          <>
+            <div className="hidden lg:flex bg-surface-container p-1 rounded-xl">
+              {SEGMENTED_PERIODS.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setSelectedPeriod(p.value)}
+                  className={`px-4 py-2 text-[13px] font-bold rounded-lg transition-all ${
+                    selectedPeriod === p.value
+                      ? 'bg-surface-container-lowest text-on-surface admin-shadow-md'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <AdminButton variant="secondary" icon="insights" size="lg" onClick={generateReport}>
+              Generate
+            </AdminButton>
+            <AdminButton variant="primary" icon="file_download" size="lg" onClick={exportReport}>
+              Export
+            </AdminButton>
+          </>
+        }
+      />
 
       {/* Filters */}
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        padding: '1.5rem',
-        marginBottom: '1.5rem',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          alignItems: 'center'
-        }}>
+      <AdminCard padding="p-5 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <AdminSelect
+            label="Time Period"
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            options={PERIODS}
+          />
+          <AdminSelect
+            label="Report Type"
+            value={selectedReport}
+            onChange={(e) => setSelectedReport(e.target.value)}
+            options={REPORTS}
+          />
+        </div>
+      </AdminCard>
+
+      {/* KPIs */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+        <StatCard
+          icon="payments"
+          label="Total Sales"
+          value="$126,000"
+          change="+18.4%"
+          changeType="positive"
+        />
+        <StatCard
+          icon="shopping_cart"
+          label="Total Orders"
+          value="364"
+          change="+12%"
+          changeType="positive"
+        />
+        <StatCard
+          icon="group"
+          label="Total Customers"
+          value="178"
+          change="+8%"
+          changeType="positive"
+        />
+        <StatCard
+          icon="trending_up"
+          label="Growth Rate"
+          value="15.2%"
+          change="Sustained"
+          changeType="positive"
+        />
+      </section>
+
+      {/* Revenue Chart */}
+      <AdminCard padding="p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#374151',
-              marginBottom: '0.25rem'
-            }}>
-              Time Period
-            </label>
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              style={{
-                padding: '0.5rem 0.75rem',
-                border: '2px solid #e5e7eb',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                width: '150px',
-                transition: 'border-color 0.3s ease'
-              }}
-              onFocus={(e) => {
-                e.target.style.outline = 'none'
-                e.target.style.borderColor = '#FFD700'
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb'
-              }}
-            >
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="quarter">This Quarter</option>
-              <option value="year">This Year</option>
-            </select>
+            <h3 className="text-headline-md font-bold text-on-surface">Revenue Trend</h3>
+            <p className="text-on-surface-variant/70 text-[14px] mt-1">
+              Historical revenue performance over the selected period.
+            </p>
           </div>
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#374151',
-              marginBottom: '0.25rem'
-            }}>
-              Report Type
-            </label>
-            <select
-              value={selectedReport}
-              onChange={(e) => setSelectedReport(e.target.value)}
-              style={{
-                padding: '0.5rem 0.75rem',
-                border: '2px solid #e5e7eb',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                width: '150px',
-                transition: 'border-color 0.3s ease'
-              }}
-              onFocus={(e) => {
-                e.target.style.outline = 'none'
-                e.target.style.borderColor = '#FFD700'
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb'
-              }}
-            >
-              <option value="sales">Sales Report</option>
-              <option value="products">Products Report</option>
-              <option value="customers">Customers Report</option>
-              <option value="inventory">Inventory Report</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '2rem'
-      }}>
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '1.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <div>
-              <p style={{
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                color: '#111827',
-                margin: '0 0 0.5rem 0'
-              }}>
-                $126,000
-              </p>
-              <p style={{
-                color: '#6b7280',
-                margin: 0,
-                fontSize: '0.875rem'
-              }}>
-                Total Sales
-              </p>
-            </div>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'rgba(59, 130, 246, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <i className="fas fa-dollar-sign" style={{
-                fontSize: '1.25rem',
-                color: '#3b82f6'
-              }}></i>
-            </div>
+          <div className="flex bg-surface-container rounded-lg p-1">
+            <button className="px-4 py-1.5 bg-surface-container-lowest rounded-md text-[12px] font-bold shadow-sm">
+              Monthly
+            </button>
+            <button className="px-4 py-1.5 text-on-surface-variant text-[12px] font-medium hover:text-on-surface">
+              Weekly
+            </button>
           </div>
         </div>
 
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '1.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <div>
-              <p style={{
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                color: '#111827',
-                margin: '0 0 0.5rem 0'
-              }}>
-                364
-              </p>
-              <p style={{
-                color: '#6b7280',
-                margin: 0,
-                fontSize: '0.875rem'
-              }}>
-                Total Orders
-              </p>
-            </div>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'rgba(16, 185, 129, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <i className="fas fa-shopping-cart" style={{
-                fontSize: '1.25rem',
-                color: '#10b981'
-              }}></i>
-            </div>
+        {/* Inline SVG Line Chart */}
+        <div className="h-[280px] w-full relative">
+          <svg className="w-full h-full overflow-visible" viewBox="0 0 800 280" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="reportChartFill" x1="0%" x2="0%" y1="0%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#ffd600', stopOpacity: 0.25 }} />
+                <stop offset="100%" style={{ stopColor: '#ffd600', stopOpacity: 0 }} />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0,230 Q100,200 200,210 T400,140 T600,90 T800,45 L800,280 L0,280 Z"
+              fill="url(#reportChartFill)"
+            />
+            <path
+              d="M0,230 Q100,200 200,210 T400,140 T600,90 T800,45"
+              fill="none"
+              stroke="#705d00"
+              strokeLinecap="round"
+              strokeWidth="3"
+            />
+            <circle cx="800" cy="45" fill="#705d00" r="5" />
+          </svg>
+          <div className="absolute bottom-[-20px] left-0 w-full flex justify-between text-[11px] text-on-surface-variant/60">
+            <span>Jan</span>
+            <span>Feb</span>
+            <span>Mar</span>
+            <span>Apr</span>
+            <span>May</span>
+            <span>Jun</span>
           </div>
         </div>
+      </AdminCard>
 
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '1.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <div>
-              <p style={{
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                color: '#111827',
-                margin: '0 0 0.5rem 0'
-              }}>
-                178
-              </p>
-              <p style={{
-                color: '#6b7280',
-                margin: 0,
-                fontSize: '0.875rem'
-              }}>
-                Total Customers
-              </p>
-            </div>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'rgba(245, 158, 11, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <i className="fas fa-users" style={{
-                fontSize: '1.25rem',
-                color: '#f59e0b'
-              }}></i>
-            </div>
+      {/* Tables */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+        <AdminCard>
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-headline-md font-bold text-on-surface">Top Products</h3>
+            <span className="text-[12px] font-bold text-on-surface-variant/70 uppercase tracking-wider">
+              By Revenue
+            </span>
           </div>
-        </div>
-
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '1.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e5e7eb'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
-            <div>
-              <p style={{
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                color: '#111827',
-                margin: '0 0 0.5rem 0'
-              }}>
-                15.2%
-              </p>
-              <p style={{
-                color: '#6b7280',
-                margin: 0,
-                fontSize: '0.875rem'
-              }}>
-                Growth Rate
-              </p>
-            </div>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'rgba(239, 68, 68, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <i className="fas fa-chart-line" style={{
-                fontSize: '1.25rem',
-                color: '#ef4444'
-              }}></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: '1.5rem'
-      }}>
-        {/* Top Products */}
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '1.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e5e7eb'
-        }}>
-          <h3 style={{
-            fontSize: '1.125rem',
-            fontWeight: 600,
-            color: '#111827',
-            margin: '0 0 1rem 0'
-          }}>
-            Top Products
-          </h3>
-          <div>
+          <div className="divide-y divide-surface-container">
             {topProducts.map((product, index) => (
-              <div key={index} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.75rem 0',
-                borderBottom: index < topProducts.length - 1 ? '1px solid #e5e7eb' : 'none'
-              }}>
-                <div>
-                  <p style={{
-                    fontWeight: 500,
-                    color: '#111827',
-                    margin: '0 0 0.25rem 0'
-                  }}>
-                    {product.name}
-                  </p>
-                  <p style={{
-                    fontSize: '0.875rem',
-                    color: '#6b7280',
-                    margin: 0
-                  }}>
-                    {product.sales} units sold
-                  </p>
+              <div key={index} className="flex justify-between items-center py-3.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-primary-container/30 flex items-center justify-center text-on-primary-fixed font-bold text-[13px] flex-shrink-0">
+                    #{index + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-on-surface text-[14px] truncate">{product.name}</p>
+                    <p className="text-on-surface-variant/60 text-[12px]">{product.sales} units sold</p>
+                  </div>
                 </div>
-                <span style={{
-                  fontWeight: 600,
-                  color: '#10b981'
-                }}>
+                <span className="font-bold text-on-surface text-[14px]">
                   ${product.revenue.toLocaleString()}
                 </span>
               </div>
             ))}
           </div>
-        </div>
+        </AdminCard>
 
-        {/* Customer Analysis */}
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '1.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e5e7eb'
-        }}>
-          <h3 style={{
-            fontSize: '1.125rem',
-            fontWeight: 600,
-            color: '#111827',
-            margin: '0 0 1rem 0'
-          }}>
-            Customer Analysis
-          </h3>
-          <div>
+        <AdminCard>
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-headline-md font-bold text-on-surface">Customer Analysis</h3>
+            <span className="text-[12px] font-bold text-on-surface-variant/70 uppercase tracking-wider">
+              Segments
+            </span>
+          </div>
+          <div className="space-y-4">
             {customerData.map((customer, index) => (
-              <div key={index} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.75rem 0',
-                borderBottom: index < customerData.length - 1 ? '1px solid #e5e7eb' : 'none'
-              }}>
-                <div>
-                  <p style={{
-                    fontWeight: 500,
-                    color: '#111827',
-                    margin: '0 0 0.25rem 0'
-                  }}>
-                    {customer.category}
-                  </p>
-                  <p style={{
-                    fontSize: '0.875rem',
-                    color: '#6b7280',
-                    margin: 0
-                  }}>
-                    {customer.count} customers
-                  </p>
+              <div key={index}>
+                <div className="flex justify-between items-center mb-1.5">
+                  <p className="font-bold text-on-surface text-[14px]">{customer.category}</p>
+                  <span className="font-bold text-on-surface text-[14px]">
+                    {customer.percentage}%
+                  </span>
                 </div>
-                <span style={{
-                  fontWeight: 600,
-                  color: '#3b82f6'
-                }}>
-                  {customer.percentage}%
-                </span>
+                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary-container rounded-full"
+                    style={{ width: `${customer.percentage}%` }}
+                  />
+                </div>
+                <p className="text-on-surface-variant/60 text-[11px] mt-1">
+                  {customer.count} customers
+                </p>
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        </AdminCard>
+      </section>
     </div>
   )
 }
 
-export default ReportsPage 
+export default ReportsPage
