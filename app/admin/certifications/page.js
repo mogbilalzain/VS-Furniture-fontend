@@ -208,10 +208,11 @@ const AdminCertifications = () => {
       
       if (response.success) {
         console.log('✅ Image uploaded successfully:', response.data.image_url);
-        setFormData(prev => ({ ...prev, image_url: response.data.image_url }));
+        setFormData(prev => ({ ...prev, image_url: response.data.image_url })); // relative for DB
         setImageFile(null);
-        // Keep preview showing the uploaded image URL instead of clearing it
-        setImagePreview(response.data.image_url);
+        // Use absolute URL (full_url) for the immediate preview so the browser
+        // does not resolve the relative path against the frontend origin.
+        setImagePreview(response.data.full_url || response.data.image_url);
         alert('Image uploaded successfully!');
       } else {
         console.error('❌ Upload failed:', response);
