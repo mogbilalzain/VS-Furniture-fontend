@@ -18,7 +18,6 @@ import {
   SystemHealthChart,
 } from '../../../components/admin/DashboardCharts'
 import QuickActions from '../../../components/admin/QuickActions'
-import RealTimeUpdates from '../../../components/admin/RealTimeUpdates'
 import {
   AdminCard,
   StatCard,
@@ -462,11 +461,6 @@ const DashboardPage = () => {
 
       {/* Quick Actions Tab */}
       {activeTab === 'actions' && <QuickActions />}
-
-      <RealTimeUpdates
-        onStatsUpdate={handleStatsUpdate}
-        onNewActivity={handleNewActivity}
-      />
     </div>
   )
 }
