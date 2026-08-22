@@ -129,7 +129,8 @@ export default function MaterialsAdmin() {
           ...prev,
           image_url: response.data.image_url
         }));
-        setImagePreview(response.data.image_url);
+        setImageFile(null);
+        setImagePreview(response.data.full_url || response.data.image_url);
         alert('Image uploaded successfully!');
       } else {
         alert(response.message || 'Failed to upload image');
