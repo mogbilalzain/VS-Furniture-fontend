@@ -11,7 +11,7 @@ const environments = {
   development: {
     // إعدادات بيئة التطوير (Development)
     // Fallback إذا لم يُضبط NEXT_PUBLIC_API_URL — استعمل 8001 إن كان المنفذ 8000 لديك محجوزاً من مشروع PHP آخر.
-    API_BASE_URL: 'http://127.0.0.1:8001/api',
+    API_BASE_URL: 'http://127.0.0.1:8000/api',
     FRONTEND_BASE_URL: 'http://localhost:3000',
     IMAGE_BASE_URL: 'http://localhost:3000',
     
